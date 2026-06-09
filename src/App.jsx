@@ -164,7 +164,7 @@ function ShipmentCard({ shipment, onRefresh, onAddContainer, onDelete }) {
             : <p className="no-live">No live data yet — click Refresh</p>
           }
           {shipment.last_updated && (
-            <p className="last-updated">Last updated: {new Date(shipment.last_updated).toLocaleString()}</p>
+            <p className="last-updated">Last updated: {new Date(shipment.last_updated).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })} IST</p>
           )}
         </>
       )}
