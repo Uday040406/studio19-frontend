@@ -25,6 +25,7 @@ function Timeline({ title, phases, type }) {
             <div className="step-dot" />
             {i < phases.length - 1 && <div className="step-line" />}
             <div className="step-label">{phase.label}</div>
+            {phase.location && <div className="step-location">{phase.location}</div>}
             <div className="step-date">{phase.dateText}</div>
           </div>
         ))}
@@ -60,6 +61,15 @@ function DeleteModal({ title, message, showDownload, onDownload, onConfirm, onCa
   )
 }
 
+const EVENT_LABELS = {
+  dispatch:                 'Dispatch',
+  gate_in:                  'Gate In',
+  origin_departure:         'Origin Departure',
+  trans_shipment_arrival:   'Trans Shipment Arrival',
+  trans_shipment_departure: 'Trans Shipment Departure',
+  arrival:                  'Arrival',
+}
+
 function ShipmentCard({ shipment, onRefresh, onAddContainer, onDelete }) {
   const [containerInput, setContainerInput] = useState('')
   const [showForm, setShowForm] = useState(false)
@@ -68,53 +78,32 @@ function ShipmentCard({ shipment, onRefresh, onAddContainer, onDelete }) {
 
   const idealPhases = [
     {
-      label: 'Departure',
+      label:    'Departure',
       dateText: formatDate(shipment.departure_date),
-      status: 'done'
+      status:   'done'
     },
     {
-      label: 'Arrival',
+      label:    'Arrival',
       dateText: formatRange(shipment.planned_arrival_earliest, shipment.planned_arrival_latest)
     },
     {
-      label: 'Customs Done',
+      label:    'Customs Done',
       dateText: formatRange(shipment.planned_customs_done_earliest, shipment.planned_customs_done_latest)
     },
     {
-      label: 'Site Delivery',
+      label:    'Site Delivery',
       dateText: formatRange(shipment.planned_site_delivery_earliest, shipment.planned_site_delivery_latest)
     },
   ]
 
-  const livePhases = [
-    {
-      label: 'Gate In',
-      dateText: formatDate(shipment.actual_gate_in),
-      status: shipment.actual_gate_in ? 'done' : ''
-    },
-    {
-      label: 'Departure',
-      dateText: formatDate(shipment.actual_departure),
-      status: shipment.actual_departure ? 'done' : ''
-    },
-    {
-      label: 'Arrival (Predicted)',
-      dateText: formatDate(shipment.predicted_arrival),
-      status: shipment.predicted_arrival
-        ? (shipment.delay_days > 0 ? 'late' : 'ontime')
-        : ''
-    },
-    {
-      label: 'Customs (Est.)',
-      dateText: formatRange(shipment.planned_customs_done_earliest, shipment.planned_customs_done_latest),
-      status: 'estimate'
-    },
-    {
-      label: 'Site Delivery (Est.)',
-      dateText: formatRange(shipment.planned_site_delivery_earliest, shipment.planned_site_delivery_latest),
-      status: 'estimate'
-    },
-  ]
+  const livePhases = shipment.gocomet_events
+    ? shipment.gocomet_events.map(e => ({
+        label:    EVENT_LABELS[(e.event || '').toLowerCase()] || e.display_event,
+        location: e.location || '',
+        dateText: `Planned: ${formatDate(e.planned_date)}  Actual: ${formatDate(e.actual_date)}`,
+        status:   e.actual_date ? 'done' : e.delayed ? 'late' : ''
+      }))
+    : []
 
   const handleRefresh = async () => {
     setRefreshing(true)
@@ -170,7 +159,10 @@ function ShipmentCard({ shipment, onRefresh, onAddContainer, onDelete }) {
 
       {shipment.gocomet_tracking_id && (
         <>
-          <Timeline title="🚢 Live Tracking" phases={livePhases} type="live" />
+          {livePhases.length > 0
+            ? <Timeline title="🚢 Live Tracking" phases={livePhases} type="live" />
+            : <p className="no-live">No live data yet — click Refresh</p>
+          }
           {shipment.last_updated && (
             <p className="last-updated">Last updated: {new Date(shipment.last_updated).toLocaleString()}</p>
           )}
