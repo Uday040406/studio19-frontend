@@ -312,6 +312,18 @@ button:active { transform: scale(0.97); }
   transition: border-color 0.15s;
 }
 
+.modal {
+  position: relative;
+  z-index: 101;
+}
+
+.modal input[type="date"] {
+  cursor: pointer;
+  position: relative;
+  z-index: 102;
+  color-scheme: light;
+}
+
 .modal input[type="date"] {
   -webkit-appearance: auto;
   appearance: auto;
