@@ -311,6 +311,13 @@ button:active { transform: scale(0.97); }
   background: var(--off-white);
   transition: border-color 0.15s;
 }
+
+.modal input[type="date"] {
+  -webkit-appearance: auto;
+  appearance: auto;
+  cursor: pointer;
+}
+
 .modal input:focus { border-color: var(--purple-mid); background: white; }
 .optional { font-weight: 400; color: var(--text-light); text-transform: none; font-size: 0.68rem; }
 .modal-buttons { display: flex; gap: 10px; margin-top: 22px; }
