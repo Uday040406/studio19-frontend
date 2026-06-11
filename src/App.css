@@ -350,3 +350,5 @@ button:active { transform: scale(0.97); }
 }
 .error { color: var(--red); font-size: 0.78rem; margin-top: 8px; }
 .shipments-list { display: flex; flex-direction: column; }
+
+.edit-btn { background: var(--gold-light); color: var(--gold); padding: 6px 10px; border: 1px solid var(--gold); }

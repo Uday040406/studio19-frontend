@@ -7,6 +7,16 @@ function formatDate(d) {
   return new Date(d).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
 }
 
+function toIST(utcStr) {
+  if (!utcStr) return ''
+  const str = utcStr.endsWith('Z') ? utcStr : utcStr + 'Z'
+  return new Date(str).toLocaleString('en-IN', {
+    timeZone: 'Asia/Kolkata',
+    day: '2-digit', month: 'short', year: 'numeric',
+    hour: '2-digit', minute: '2-digit', hour12: true
+  }) + ' IST'
+}
+
 function titleCase(str) {
   if (!str) return ''
   return str.toLowerCase().replace(/\b\w/g, c => c.toUpperCase())
@@ -96,9 +106,67 @@ function DeleteModal({ title, message, showDownload, onDownload, onConfirm, onCa
   )
 }
 
-function ShipmentCard({ shipment, onRefresh, onDelete }) {
+function EditShipmentModal({ shipment, onClose, onUpdated }) {
+  const [form, setForm] = useState({
+    shipment_name:         shipment.shipment_name || '',
+    container_number:      shipment.container_number || '',
+    expected_arrival_date: shipment.expected_arrival_date || ''
+  })
+  const [loading, setLoading] = useState(false)
+  const [error, setError]     = useState('')
+
+  const handleSubmit = async () => {
+    if (!form.container_number.trim())   return setError('Container number required')
+    if (!form.expected_arrival_date)     return setError('Expected arrival date required')
+    setLoading(true)
+    setError('')
+    try {
+      const updated = await api.updateShipment(shipment.id, form)
+      if (updated.error) throw new Error(updated.error)
+      onUpdated(updated)
+      onClose()
+    } catch (err) { setError(err.message) }
+    setLoading(false)
+  }
+
+  return (
+    <div className="modal-overlay">
+      <div className="modal">
+        <h2>Edit Shipment</h2>
+        <label>Shipment Name <span className="optional">(optional)</span></label>
+        <input
+          type="text"
+          value={form.shipment_name}
+          onChange={e => setForm({...form, shipment_name: e.target.value})}
+        />
+        <label>Container Number</label>
+        <input
+          type="text"
+          value={form.container_number}
+          onChange={e => setForm({...form, container_number: e.target.value.toUpperCase()})}
+        />
+        <label>Expected Arrival Date</label>
+        <input
+          type="date"
+          value={form.expected_arrival_date}
+          onChange={e => setForm({...form, expected_arrival_date: e.target.value})}
+        />
+        {error && <p className="error">{error}</p>}
+        <div className="modal-buttons">
+          <button onClick={handleSubmit} disabled={loading}>
+            {loading ? 'Saving...' : 'Save Changes'}
+          </button>
+          <button onClick={onClose}>Cancel</button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function ShipmentCard({ shipment, onRefresh, onDelete, onUpdate }) {
   const [refreshing, setRefreshing] = useState(false)
   const [showDeleteModal, setShowDeleteModal] = useState(false)
+  const [showEditModal, setShowEditModal] = useState(false)
 
   const handleRefresh = async () => {
     setRefreshing(true)
@@ -121,6 +189,7 @@ function ShipmentCard({ shipment, onRefresh, onDelete }) {
           <button onClick={handleRefresh} disabled={refreshing} className="refresh-btn">
             {refreshing ? '⟳' : '⟳ Refresh'}
           </button>
+          <button onClick={() => setShowEditModal(true)} className="edit-btn">✏️</button>
           <button onClick={() => setShowDeleteModal(true)} className="delete-btn">🗑</button>
         </div>
       </div>
@@ -135,9 +204,7 @@ function ShipmentCard({ shipment, onRefresh, onDelete }) {
       <Timeline events={shipment.gocomet_events} />
 
       {shipment.last_updated && (
-        <p className="last-updated">
-          Updated: {new Date(shipment.last_updated).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })} IST
-        </p>
+        <p className="last-updated">Updated: {toIST(shipment.last_updated)}</p>
       )}
 
       {showDeleteModal && (
@@ -147,6 +214,17 @@ function ShipmentCard({ shipment, onRefresh, onDelete }) {
           showDownload={false}
           onConfirm={() => { setShowDeleteModal(false); onDelete(shipment.id) }}
           onCancel={() => setShowDeleteModal(false)}
+        />
+      )}
+
+      {showEditModal && (
+        <EditShipmentModal
+          shipment={shipment}
+          onClose={() => setShowEditModal(false)}
+          onUpdated={updated => {
+            onUpdate(shipment.id, updated)
+            setShowEditModal(false)
+          }}
         />
       )}
     </div>
@@ -268,6 +346,10 @@ export default function App() {
     if (updated.id) setShipments(prev => prev.map(s => s.id === shipmentId ? updated : s))
   }
 
+  const handleUpdateShipment = (shipmentId, updatedShipment) => {
+    setShipments(prev => prev.map(s => s.id === shipmentId ? { ...s, ...updatedShipment } : s))
+  }
+
   const handleDeleteShipment = async (shipmentId) => {
     await api.deleteShipment(shipmentId)
     setShipments(prev => prev.filter(s => s.id !== shipmentId))
@@ -328,6 +410,7 @@ export default function App() {
                     shipment={s}
                     onRefresh={handleRefresh}
                     onDelete={handleDeleteShipment}
+                    onUpdate={handleUpdateShipment}
                   />
                 ))}
               </div>
