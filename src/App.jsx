@@ -1,6 +1,11 @@
 import { useState, useEffect } from 'react'
 import * as api from './api'
 import './App.css'
+import {
+  Package, Ship, Target, RefreshCw, Pencil, Trash2, Plus, Download,
+  FolderKanban, AlertTriangle, CheckCircle2, X, Send, LogIn,
+  Anchor, ArrowDownToLine, ArrowUpFromLine, Flag, TrendingDown, TrendingUp
+} from 'lucide-react'
 
 function formatDate(d) {
   if (!d) return '—'
@@ -31,9 +36,21 @@ const EVENT_LABELS = {
   arrival:                  'Arrival',
 }
 
+const EVENT_ICONS = {
+  dispatch:                 Send,
+  gate_in:                  LogIn,
+  origin_departure:         Anchor,
+  trans_shipment_arrival:   ArrowDownToLine,
+  trans_shipment_departure: ArrowUpFromLine,
+  arrival:                  Flag,
+}
+
 function Timeline({ events }) {
   if (!events || events.length === 0) return (
-    <p className="no-live">No live data yet — click Refresh</p>
+    <div className="no-live">
+      <RefreshCw size={16} strokeWidth={2} />
+      <span>No live data yet — click Refresh</span>
+    </div>
   )
   return (
     <div className="timeline">
@@ -42,10 +59,13 @@ function Timeline({ events }) {
           const isDone = !!e.actual_date
           const isDelayed = e.delayed && !isDone
           const dotClass = isDone ? 'done' : isDelayed ? 'late' : ''
+          const Icon = EVENT_ICONS[(e.event || '').toLowerCase()] || Package
           return (
             <div key={i} className={`step ${dotClass}`}>
-              <div className="step-dot" />
               {i < events.length - 1 && <div className="step-line" />}
+              <div className="step-dot">
+                <Icon size={14} strokeWidth={2.5} />
+              </div>
               <div className="step-label">{EVENT_LABELS[(e.event || '').toLowerCase()] || e.display_event}</div>
               {e.location && <div className="step-location">{titleCase(e.location)}</div>}
               <div className="step-dates">
@@ -62,27 +82,44 @@ function Timeline({ events }) {
 
 function DelayBadge({ delayDays, status, predictedArrival, expectedArrival }) {
   if (status === 'tracking') return (
-    <div className="delay-badge processing">⟳ Fetching live data — click Refresh</div>
+    <div className="delay-badge processing">
+      <RefreshCw size={18} strokeWidth={2.5} />
+      <span>Fetching live data — click Refresh</span>
+    </div>
   )
   if (!status || status === 'pending') return null
 
   if (delayDays > 0) return (
     <div className="delay-badge late">
-      <span className="delay-num">{delayDays}</span>
-      <span className="delay-text">Day{delayDays > 1 ? 's' : ''} Late</span>
-      {predictedArrival && <span className="delay-sub">Predicted: {formatDate(predictedArrival)} · Expected: {formatDate(expectedArrival)}</span>}
+      <div className="delay-icon"><TrendingDown size={22} strokeWidth={2.5} /></div>
+      <div className="delay-main">
+        <span className="delay-num">{delayDays}</span>
+        <span className="delay-text">Day{delayDays > 1 ? 's' : ''} Late</span>
+      </div>
+      {predictedArrival && (
+        <span className="delay-sub">Predicted {formatDate(predictedArrival)} · Expected {formatDate(expectedArrival)}</span>
+      )}
     </div>
   )
   if (delayDays < 0) return (
     <div className="delay-badge early">
-      <span className="delay-num">{Math.abs(delayDays)}</span>
-      <span className="delay-text">Day{Math.abs(delayDays) > 1 ? 's' : ''} Early</span>
-      {predictedArrival && <span className="delay-sub">Predicted: {formatDate(predictedArrival)} · Expected: {formatDate(expectedArrival)}</span>}
+      <div className="delay-icon"><TrendingUp size={22} strokeWidth={2.5} /></div>
+      <div className="delay-main">
+        <span className="delay-num">{Math.abs(delayDays)}</span>
+        <span className="delay-text">Day{Math.abs(delayDays) > 1 ? 's' : ''} Early</span>
+      </div>
+      {predictedArrival && (
+        <span className="delay-sub">Predicted {formatDate(predictedArrival)} · Expected {formatDate(expectedArrival)}</span>
+      )}
     </div>
   )
   return (
-    <div className="delay-badge ontime">✓ On Time
-      {predictedArrival && <span className="delay-sub">Predicted: {formatDate(predictedArrival)}</span>}
+    <div className="delay-badge ontime">
+      <div className="delay-icon"><CheckCircle2 size={22} strokeWidth={2.5} /></div>
+      <div className="delay-main">
+        <span className="delay-text">On Time</span>
+      </div>
+      {predictedArrival && <span className="delay-sub">Predicted {formatDate(predictedArrival)}</span>}
     </div>
   )
 }
@@ -91,15 +128,18 @@ function DeleteModal({ title, message, showDownload, onDownload, onConfirm, onCa
   return (
     <div className="modal-overlay">
       <div className="modal">
-        <h2>⚠️ {title}</h2>
+        <div className="modal-icon warn"><AlertTriangle size={24} strokeWidth={2.5} /></div>
+        <h2>{title}</h2>
         <p>{message}</p>
         <p className="irreversible">This action is irreversible.</p>
         {showDownload && (
-          <p>Please <button className="link-btn" onClick={onDownload}>download the Excel sheet</button> before deleting.</p>
+          <p className="download-hint">
+            Please <button className="link-btn" onClick={onDownload}>download the Excel sheet</button> before deleting.
+          </p>
         )}
         <div className="modal-buttons">
-          <button onClick={onConfirm} className="delete-confirm-btn">Yes, Delete</button>
-          <button onClick={onCancel}>Cancel</button>
+          <button onClick={onCancel} className="btn-secondary">Cancel</button>
+          <button onClick={onConfirm} className="btn-danger">Yes, Delete</button>
         </div>
       </div>
     </div>
@@ -132,8 +172,9 @@ function EditShipmentModal({ shipment, onClose, onUpdated }) {
   return (
     <div className="modal-overlay">
       <div className="modal">
+        <button className="modal-close" onClick={onClose}><X size={18} /></button>
         <h2>Edit Shipment</h2>
-        <label>Shipment Name <span className="optional">(optional)</span></label>
+        <label>Shipment Name <span className="optional">Optional</span></label>
         <input
           type="text"
           value={form.shipment_name}
@@ -153,10 +194,10 @@ function EditShipmentModal({ shipment, onClose, onUpdated }) {
         />
         {error && <p className="error">{error}</p>}
         <div className="modal-buttons">
-          <button onClick={handleSubmit} disabled={loading}>
+          <button onClick={onClose} className="btn-secondary">Cancel</button>
+          <button onClick={handleSubmit} disabled={loading} className="btn-primary">
             {loading ? 'Saving...' : 'Save Changes'}
           </button>
-          <button onClick={onClose}>Cancel</button>
         </div>
       </div>
     </div>
@@ -180,17 +221,21 @@ function ShipmentCard({ shipment, onRefresh, onDelete, onUpdate }) {
         <div className="shipment-info">
           <h3>{shipment.shipment_name || shipment.container_number}</h3>
           <div className="shipment-meta">
-            {shipment.container_number && <span>📦 {shipment.container_number}</span>}
-            {shipment.carrier && <span>🚢 {shipment.carrier}</span>}
-            <span>🎯 Expected: {formatDate(shipment.expected_arrival_date)}</span>
+            <span className="meta-pill"><Package size={13} strokeWidth={2.5} /> {shipment.container_number}</span>
+            {shipment.carrier && <span className="meta-pill"><Ship size={13} strokeWidth={2.5} /> {shipment.carrier}</span>}
+            <span className="meta-pill accent"><Target size={13} strokeWidth={2.5} /> Expected {formatDate(shipment.expected_arrival_date)}</span>
           </div>
         </div>
         <div className="shipment-actions">
-          <button onClick={handleRefresh} disabled={refreshing} className="refresh-btn">
-            {refreshing ? '⟳' : '⟳ Refresh'}
+          <button onClick={handleRefresh} disabled={refreshing} className="icon-btn refresh" title="Refresh">
+            <RefreshCw size={16} strokeWidth={2.5} className={refreshing ? 'spin' : ''} />
           </button>
-          <button onClick={() => setShowEditModal(true)} className="edit-btn">✏️</button>
-          <button onClick={() => setShowDeleteModal(true)} className="delete-btn">🗑</button>
+          <button onClick={() => setShowEditModal(true)} className="icon-btn edit" title="Edit">
+            <Pencil size={16} strokeWidth={2.5} />
+          </button>
+          <button onClick={() => setShowDeleteModal(true)} className="icon-btn delete" title="Delete">
+            <Trash2 size={16} strokeWidth={2.5} />
+          </button>
         </div>
       </div>
 
@@ -204,7 +249,7 @@ function ShipmentCard({ shipment, onRefresh, onDelete, onUpdate }) {
       <Timeline events={shipment.gocomet_events} />
 
       {shipment.last_updated && (
-        <p className="last-updated">Updated: {toIST(shipment.last_updated)}</p>
+        <p className="last-updated">Updated {toIST(shipment.last_updated)}</p>
       )}
 
       {showDeleteModal && (
@@ -253,8 +298,9 @@ function NewShipmentModal({ projectId, onClose, onCreated }) {
   return (
     <div className="modal-overlay">
       <div className="modal">
+        <button className="modal-close" onClick={onClose}><X size={18} /></button>
         <h2>Add Shipment</h2>
-        <label>Shipment Name <span className="optional">(optional)</span></label>
+        <label>Shipment Name <span className="optional">Optional</span></label>
         <input
           type="text"
           placeholder="e.g. Andreu World — Phase 2"
@@ -276,10 +322,10 @@ function NewShipmentModal({ projectId, onClose, onCreated }) {
         />
         {error && <p className="error">{error}</p>}
         <div className="modal-buttons">
-          <button onClick={handleSubmit} disabled={loading}>
-            {loading ? 'Starting tracking...' : 'Add & Start Tracking'}
+          <button onClick={onClose} className="btn-secondary">Cancel</button>
+          <button onClick={handleSubmit} disabled={loading} className="btn-primary">
+            {loading ? 'Starting tracking...' : 'Add & Track'}
           </button>
-          <button onClick={onClose}>Cancel</button>
         </div>
       </div>
     </div>
@@ -303,14 +349,15 @@ function NewProjectModal({ onClose, onCreated }) {
   return (
     <div className="modal-overlay">
       <div className="modal">
+        <button className="modal-close" onClick={onClose}><X size={18} /></button>
         <h2>New Project</h2>
         <label>Project Name</label>
         <input type="text" placeholder="e.g. Disney HQ Bangalore" value={name} onChange={e => setName(e.target.value)} />
-        <label>Client Name <span className="optional">(optional)</span></label>
+        <label>Client Name <span className="optional">Optional</span></label>
         <input type="text" placeholder="e.g. Walt Disney India" value={clientName} onChange={e => setClientName(e.target.value)} />
         <div className="modal-buttons">
-          <button onClick={handleSubmit} disabled={loading}>{loading ? 'Creating...' : 'Create Project'}</button>
-          <button onClick={onClose}>Cancel</button>
+          <button onClick={onClose} className="btn-secondary">Cancel</button>
+          <button onClick={handleSubmit} disabled={loading} className="btn-primary">{loading ? 'Creating...' : 'Create Project'}</button>
         </div>
       </div>
     </div>
@@ -370,57 +417,94 @@ export default function App() {
 
   const activeProject = projects.find(p => p.id === activeProjectId)
 
-  if (loading) return <div className="loading">Loading Studio19 Tracker...</div>
+  if (loading) return (
+    <div className="loading">
+      <div className="loading-mark">S19</div>
+      <span>Loading Studio19 Tracker...</span>
+    </div>
+  )
 
   return (
     <div className="app">
-      <header className="app-header">
-        <h1><span>Studio19</span> — Shipment Tracker</h1>
-      </header>
-
-      <div className="project-tabs">
-        {projects.map(p => (
-          <button
-            key={p.id}
-            className={`project-tab ${p.id === activeProjectId ? 'active' : ''}`}
-            onClick={() => setActiveProjectId(p.id)}
-          >
-            {p.name}
-          </button>
-        ))}
-        <button className="project-tab new-tab" onClick={() => setShowNewProject(true)}>+ New Project</button>
-      </div>
-
-      {activeProject && (
-        <div className="project-content">
-          <div className="project-toolbar">
-            <h2>{activeProject.name}{activeProject.client_name ? ` — ${activeProject.client_name}` : ''}</h2>
-            <div className="toolbar-actions">
-              <button onClick={handleDownload} className="download-btn">⬇ Excel</button>
-              <button onClick={() => setShowNewShipment(true)} className="add-shipment-btn">+ Add Shipment</button>
-              <button onClick={() => setShowDeleteProject(true)} className="delete-project-btn">🗑</button>
-            </div>
+      <aside className="sidebar">
+        <div className="sidebar-brand">
+          <div className="brand-mark">S19</div>
+          <div className="brand-text">
+            <strong>Studio19</strong>
+            <span>Shipment Tracker</span>
           </div>
-          {shipments.length === 0
-            ? <div className="empty-state"><p>No shipments yet. Click + Add Shipment to get started.</p></div>
-            : <div className="shipments-list">
-                {shipments.map(s => (
-                  <ShipmentCard
-                    key={s.id}
-                    shipment={s}
-                    onRefresh={handleRefresh}
-                    onDelete={handleDeleteShipment}
-                    onUpdate={handleUpdateShipment}
-                  />
-                ))}
-              </div>
-          }
         </div>
-      )}
 
-      {projects.length === 0 && !loading && (
-        <div className="empty-state"><p>No projects yet. Click + New Project to get started.</p></div>
-      )}
+        <nav className="sidebar-nav">
+          <div className="sidebar-label">Projects</div>
+          {projects.map(p => (
+            <button
+              key={p.id}
+              className={`sidebar-item ${p.id === activeProjectId ? 'active' : ''}`}
+              onClick={() => setActiveProjectId(p.id)}
+            >
+              <FolderKanban size={16} strokeWidth={2.5} />
+              <span>{p.name}</span>
+            </button>
+          ))}
+        </nav>
+
+        <button className="sidebar-new" onClick={() => setShowNewProject(true)}>
+          <Plus size={16} strokeWidth={2.5} />
+          New Project
+        </button>
+      </aside>
+
+      <main className="main">
+        {activeProject ? (
+          <>
+            <div className="page-header">
+              <div>
+                <h1>{activeProject.name}</h1>
+                {activeProject.client_name && <p className="page-subtitle">{activeProject.client_name}</p>}
+              </div>
+              <div className="page-actions">
+                <button onClick={handleDownload} className="btn-outline">
+                  <Download size={15} strokeWidth={2.5} /> Excel
+                </button>
+                <button onClick={() => setShowNewShipment(true)} className="btn-primary">
+                  <Plus size={15} strokeWidth={2.5} /> Add Shipment
+                </button>
+                <button onClick={() => setShowDeleteProject(true)} className="icon-btn delete">
+                  <Trash2 size={16} strokeWidth={2.5} />
+                </button>
+              </div>
+            </div>
+
+            {shipments.length === 0
+              ? (
+                <div className="empty-state">
+                  <Package size={40} strokeWidth={1.5} />
+                  <p>No shipments yet</p>
+                  <span>Click "Add Shipment" to start tracking your first container</span>
+                </div>
+              )
+              : <div className="shipments-list">
+                  {shipments.map(s => (
+                    <ShipmentCard
+                      key={s.id}
+                      shipment={s}
+                      onRefresh={handleRefresh}
+                      onDelete={handleDeleteShipment}
+                      onUpdate={handleUpdateShipment}
+                    />
+                  ))}
+                </div>
+            }
+          </>
+        ) : (
+          <div className="empty-state">
+            <FolderKanban size={40} strokeWidth={1.5} />
+            <p>No projects yet</p>
+            <span>Click "New Project" in the sidebar to get started</span>
+          </div>
+        )}
+      </main>
 
       {showNewProject && (
         <NewProjectModal
