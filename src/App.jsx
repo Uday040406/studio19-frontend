@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react'
 import * as api from './api'
 import './App.css'
+import logo from './assets/studio19-logo.png'
 import {
   Package, Ship, Target, RefreshCw, Pencil, Trash2, Plus, Download,
-  FolderKanban, AlertTriangle, CheckCircle2, X, Send, LogIn,
-  Anchor, ArrowDownToLine, ArrowUpFromLine, Flag, TrendingDown, TrendingUp
+  AlertTriangle, CheckCircle2, X, Send, LogIn,
+  Anchor, ArrowDownToLine, ArrowUpFromLine, Flag, TrendingDown, TrendingUp,
+  ChevronDown, ChevronUp
 } from 'lucide-react'
 
 function formatDate(d) {
@@ -124,6 +126,21 @@ function DelayBadge({ delayDays, status, predictedArrival, expectedArrival }) {
   )
 }
 
+function CompactStatus({ delayDays, status }) {
+  if (status === 'tracking' || !status || status === 'pending') return (
+    <span className="compact-status processing">Pending</span>
+  )
+  if (delayDays > 0) return (
+    <span className="compact-status late"><TrendingDown size={13} strokeWidth={2.5} /> {delayDays}d Late</span>
+  )
+  if (delayDays < 0) return (
+    <span className="compact-status early"><TrendingUp size={13} strokeWidth={2.5} /> {Math.abs(delayDays)}d Early</span>
+  )
+  return (
+    <span className="compact-status ontime"><CheckCircle2 size={13} strokeWidth={2.5} /> On Time</span>
+  )
+}
+
 function DeleteModal({ title, message, showDownload, onDownload, onConfirm, onCancel }) {
   return (
     <div className="modal-overlay">
@@ -208,48 +225,58 @@ function ShipmentCard({ shipment, onRefresh, onDelete, onUpdate }) {
   const [refreshing, setRefreshing] = useState(false)
   const [showDeleteModal, setShowDeleteModal] = useState(false)
   const [showEditModal, setShowEditModal] = useState(false)
+  const [expanded, setExpanded] = useState(false)
 
-  const handleRefresh = async () => {
+  const handleRefresh = async (e) => {
+    e.stopPropagation()
     setRefreshing(true)
     await onRefresh(shipment.id)
     setRefreshing(false)
   }
 
   return (
-    <div className="shipment-card">
-      <div className="shipment-header">
+    <div className={`shipment-card ${expanded ? 'expanded' : ''}`}>
+      <div className="shipment-header" onClick={() => setExpanded(!expanded)}>
         <div className="shipment-info">
           <h3>{shipment.shipment_name || shipment.container_number}</h3>
           <div className="shipment-meta">
             <span className="meta-pill"><Package size={13} strokeWidth={2.5} /> {shipment.container_number}</span>
             {shipment.carrier && <span className="meta-pill"><Ship size={13} strokeWidth={2.5} /> {shipment.carrier}</span>}
             <span className="meta-pill accent"><Target size={13} strokeWidth={2.5} /> Expected {formatDate(shipment.expected_arrival_date)}</span>
+            {!expanded && <CompactStatus delayDays={shipment.delay_days} status={shipment.status} />}
           </div>
         </div>
         <div className="shipment-actions">
           <button onClick={handleRefresh} disabled={refreshing} className="icon-btn refresh" title="Refresh">
             <RefreshCw size={16} strokeWidth={2.5} className={refreshing ? 'spin' : ''} />
           </button>
-          <button onClick={() => setShowEditModal(true)} className="icon-btn edit" title="Edit">
+          <button onClick={(e) => { e.stopPropagation(); setShowEditModal(true) }} className="icon-btn edit" title="Edit">
             <Pencil size={16} strokeWidth={2.5} />
           </button>
-          <button onClick={() => setShowDeleteModal(true)} className="icon-btn delete" title="Delete">
+          <button onClick={(e) => { e.stopPropagation(); setShowDeleteModal(true) }} className="icon-btn delete" title="Delete">
             <Trash2 size={16} strokeWidth={2.5} />
+          </button>
+          <button className="icon-btn chevron" title={expanded ? 'Collapse' : 'Expand'}>
+            {expanded ? <ChevronUp size={18} strokeWidth={2.5} /> : <ChevronDown size={18} strokeWidth={2.5} />}
           </button>
         </div>
       </div>
 
-      <DelayBadge
-        delayDays={shipment.delay_days}
-        status={shipment.status}
-        predictedArrival={shipment.predicted_arrival}
-        expectedArrival={shipment.expected_arrival_date}
-      />
+      {expanded && (
+        <div className="shipment-body">
+          <DelayBadge
+            delayDays={shipment.delay_days}
+            status={shipment.status}
+            predictedArrival={shipment.predicted_arrival}
+            expectedArrival={shipment.expected_arrival_date}
+          />
 
-      <Timeline events={shipment.gocomet_events} />
+          <Timeline events={shipment.gocomet_events} />
 
-      {shipment.last_updated && (
-        <p className="last-updated">Updated {toIST(shipment.last_updated)}</p>
+          {shipment.last_updated && (
+            <p className="last-updated">Updated {toIST(shipment.last_updated)}</p>
+          )}
+        </div>
       )}
 
       {showDeleteModal && (
@@ -419,48 +446,41 @@ export default function App() {
 
   if (loading) return (
     <div className="loading">
-      <div className="loading-mark">S19</div>
+      <img src={logo} alt="Studio19" className="loading-logo" />
       <span>Loading Studio19 Tracker...</span>
     </div>
   )
 
   return (
     <div className="app">
-      <aside className="sidebar">
-        <div className="sidebar-brand">
-          <div className="brand-mark">S19</div>
-          <div className="brand-text">
-            <strong>Studio19</strong>
-            <span>Shipment Tracker</span>
-          </div>
+      <header className="app-header">
+        <div className="header-brand">
+          <img src={logo} alt="Studio19" className="brand-logo" />
+          <h1>Studio19 <span>— Shipment Tracker</span></h1>
         </div>
+      </header>
 
-        <nav className="sidebar-nav">
-          <div className="sidebar-label">Projects</div>
-          {projects.map(p => (
-            <button
-              key={p.id}
-              className={`sidebar-item ${p.id === activeProjectId ? 'active' : ''}`}
-              onClick={() => setActiveProjectId(p.id)}
-            >
-              <FolderKanban size={16} strokeWidth={2.5} />
-              <span>{p.name}</span>
-            </button>
-          ))}
-        </nav>
-
-        <button className="sidebar-new" onClick={() => setShowNewProject(true)}>
-          <Plus size={16} strokeWidth={2.5} />
-          New Project
+      <div className="project-tabs">
+        {projects.map(p => (
+          <button
+            key={p.id}
+            className={`project-tab ${p.id === activeProjectId ? 'active' : ''}`}
+            onClick={() => setActiveProjectId(p.id)}
+          >
+            {p.name}
+          </button>
+        ))}
+        <button className="project-tab new-tab" onClick={() => setShowNewProject(true)}>
+          <Plus size={14} strokeWidth={3} /> New Project
         </button>
-      </aside>
+      </div>
 
       <main className="main">
         {activeProject ? (
           <>
             <div className="page-header">
               <div>
-                <h1>{activeProject.name}</h1>
+                <h2>{activeProject.name}</h2>
                 {activeProject.client_name && <p className="page-subtitle">{activeProject.client_name}</p>}
               </div>
               <div className="page-actions">
@@ -499,9 +519,9 @@ export default function App() {
           </>
         ) : (
           <div className="empty-state">
-            <FolderKanban size={40} strokeWidth={1.5} />
+            <Package size={40} strokeWidth={1.5} />
             <p>No projects yet</p>
-            <span>Click "New Project" in the sidebar to get started</span>
+            <span>Click "New Project" above to get started</span>
           </div>
         )}
       </main>
