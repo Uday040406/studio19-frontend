@@ -91,6 +91,16 @@ function DelayBadge({ delayDays, status, predictedArrival, expectedArrival }) {
   )
   if (!status || status === 'pending') return null
 
+  if (status === 'arrived') return (
+    <div className="delay-badge ontime">
+      <div className="delay-icon"><CheckCircle2 size={22} strokeWidth={2.5} /></div>
+      <div className="delay-main">
+        <span className="delay-text">Arrived</span>
+      </div>
+      {predictedArrival && <span className="delay-sub">Arrived {formatDate(predictedArrival)}</span>}
+    </div>
+  )
+
   if (delayDays > 0) return (
     <div className="delay-badge late">
       <div className="delay-icon"><TrendingDown size={22} strokeWidth={2.5} /></div>
@@ -129,6 +139,9 @@ function DelayBadge({ delayDays, status, predictedArrival, expectedArrival }) {
 function CompactStatus({ delayDays, status }) {
   if (status === 'tracking' || !status || status === 'pending') return (
     <span className="compact-status processing">Pending</span>
+  )
+  if (status === 'arrived') return (
+    <span className="compact-status ontime"><CheckCircle2 size={13} strokeWidth={2.5} /> Arrived</span>
   )
   if (delayDays > 0) return (
     <span className="compact-status late"><TrendingDown size={13} strokeWidth={2.5} /> {delayDays}d Late</span>
@@ -432,9 +445,11 @@ function EditProjectModal({ project, onClose, onUpdated }) {
 function FleetStats({ shipments }) {
   const total   = shipments.length
   const pending = shipments.filter(s => s.status === 'tracking' || !s.status || s.status === 'pending').length
-  const late    = shipments.filter(s => s.delay_days > 0).length
-  const early   = shipments.filter(s => s.delay_days < 0).length
-  const onTime  = total - pending - late - early
+  const arrived = shipments.filter(s => s.status === 'arrived').length
+  const late    = shipments.filter(s => s.status !== 'arrived' && s.delay_days > 0).length
+  const early   = shipments.filter(s => s.status !== 'arrived' && s.delay_days < 0).length
+  const inTransit = late + early
+  const onTime  = total - pending - arrived - late - early
 
   return (
     <div className="fleet-stats">
@@ -456,7 +471,11 @@ function FleetStats({ shipments }) {
       </div>
       <div className="stat-card">
         <div className="stat-icon processing"><RefreshCw size={18} strokeWidth={2.5} /></div>
-        <div className="stat-text"><span className="stat-num">{pending}</span><span className="stat-label">In Transit</span></div>
+        <div className="stat-text"><span className="stat-num">{inTransit}</span><span className="stat-label">In Transit</span></div>
+      </div>
+      <div className="stat-card">
+        <div className="stat-icon arrived"><Package size={18} strokeWidth={2.5} /></div>
+        <div className="stat-text"><span className="stat-num">{arrived}</span><span className="stat-label">Arrived</span></div>
       </div>
     </div>
   )
