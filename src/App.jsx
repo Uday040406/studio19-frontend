@@ -4,7 +4,7 @@ import './App.css'
 import logo from './assets/studio19-logo.png'
 import {
   Package, Ship, Target, RefreshCw, Pencil, Trash2, Plus, Download,
-  AlertTriangle, CheckCircle2, X, Send, LogIn,
+  AlertTriangle, CheckCircle2, X, Send, LogIn, MapPin,
   Anchor, ArrowDownToLine, ArrowUpFromLine, Flag, TrendingDown, TrendingUp,
   ChevronDown, ChevronUp
 } from 'lucide-react'
@@ -30,21 +30,27 @@ function titleCase(str) {
 }
 
 const EVENT_LABELS = {
-  dispatch:                 'Dispatch',
-  gate_in:                  'Gate In',
-  origin_departure:         'Origin Departure',
-  trans_shipment_arrival:   'Transshipment Arrival',
-  trans_shipment_departure: 'Transshipment Departure',
-  arrival:                  'Arrival',
+  dispatch:                   'Dispatch',
+  gate_in:                    'Gate In',
+  origin_departure:           'Origin Departure',
+  trans_shipment_arrival:     'Transshipment Arrival',
+  trans_shipment_departure:   'Transshipment Departure',
+  loaded_at_pod:              'Loaded At POD',
+  departure_at_pod:           'Departure At POD',
+  arrival:                    'Arrival',
+  inland_destination_arrival: 'Inland Destination Arrival',
 }
 
 const EVENT_ICONS = {
-  dispatch:                 Send,
-  gate_in:                  LogIn,
-  origin_departure:         Anchor,
-  trans_shipment_arrival:   ArrowDownToLine,
-  trans_shipment_departure: ArrowUpFromLine,
-  arrival:                  Flag,
+  dispatch:                   Send,
+  gate_in:                    LogIn,
+  origin_departure:           Anchor,
+  trans_shipment_arrival:     ArrowDownToLine,
+  trans_shipment_departure:   ArrowUpFromLine,
+  loaded_at_pod:              ArrowDownToLine,
+  departure_at_pod:           ArrowUpFromLine,
+  arrival:                    MapPin,
+  inland_destination_arrival: Flag,
 }
 
 function Timeline({ events }) {
