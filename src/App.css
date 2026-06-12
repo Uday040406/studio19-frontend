@@ -301,9 +301,8 @@ button:disabled { opacity: 0.6; cursor: not-allowed; }
   flex-wrap: wrap;
   gap: 12px;
   margin-bottom: 24px;
-  position: relative;
-  padding-bottom: 22px;
 }
+
 .stat-card {
   flex: 1;
   min-width: 130px;
@@ -332,30 +331,8 @@ button:disabled { opacity: 0.6; cursor: not-allowed; }
 .stat-num { font-size: 1.25rem; font-weight: 800; color: var(--purple-900); }
 .stat-label { font-size: 0.7rem; font-weight: 700; color: var(--ink-400); text-transform: uppercase; letter-spacing: 0.06em; white-space: nowrap; }
 
-.route-line {
-  position: absolute;
-  bottom: 0; left: 0; right: 0;
-  height: 2px;
-  border-top: 2px dashed var(--ink-200);
-  overflow: visible;
-}
-.route-ship {
-  position: absolute;
-  top: -9px; left: 0;
-  width: 20px; height: 20px;
-  border-radius: 50%;
-  background: var(--purple-900);
-  color: var(--gold-500);
-  display: flex; align-items: center; justify-content: center;
-  animation: shipSail 9s linear infinite;
-}
-@keyframes shipSail {
-  0%   { left: 0%; transform: translateX(0); }
-  100% { left: 100%; transform: translateX(-100%); }
-}
-
 @media (prefers-reduced-motion: reduce) {
-  .route-ship, .shipment-card, .compact-status.processing { animation: none; }
+  .shipment-card, .compact-status.processing { animation: none; }
 }
 /* ── EXPANDED BODY ──────────────────────────── */
 .shipment-body {

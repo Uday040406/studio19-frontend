@@ -458,9 +458,6 @@ function FleetStats({ shipments }) {
         <div className="stat-icon processing"><RefreshCw size={18} strokeWidth={2.5} /></div>
         <div className="stat-text"><span className="stat-num">{pending}</span><span className="stat-label">In Transit</span></div>
       </div>
-      <div className="route-line">
-        <span className="route-ship"><Ship size={16} strokeWidth={2.5} /></span>
-      </div>
     </div>
   )
 }
@@ -575,8 +572,8 @@ export default function App() {
                 {activeProject.client_name && <p className="page-subtitle">{activeProject.client_name}</p>}
               </div>
               <div className="page-actions">
-                <button onClick={handleRefreshAll} disabled={refreshingAll || shipments.length === 0} className="btn-outline" title="Refresh all shipments">
-                  <RefreshCw size={15} strokeWidth={2.5} className={refreshingAll ? 'spin' : ''} /> Refresh All
+                <button onClick={handleRefreshAll} disabled={refreshingAll || shipments.length === 0} className="icon-btn refresh" title="Refresh all shipments">
+                  <RefreshCw size={16} strokeWidth={2.5} className={refreshingAll ? 'spin' : ''} />
                 </button>
                 <button onClick={handleDownload} className="btn-outline">
                   <Download size={15} strokeWidth={2.5} /> Excel
