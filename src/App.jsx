@@ -454,8 +454,8 @@ function FleetStats({ shipments }) {
   const arrived = shipments.filter(s => s.status === 'arrived').length
   const late    = shipments.filter(s => s.status !== 'arrived' && s.delay_days > 0).length
   const early   = shipments.filter(s => s.status !== 'arrived' && s.delay_days < 0).length
-  const inTransit = late + early
-  const onTime  = total - pending - arrived - late - early
+  const inTransit = total - pending - arrived
+  const onTime  = inTransit - late - early
 
   return (
     <div className="fleet-stats">
