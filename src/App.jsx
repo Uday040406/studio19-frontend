@@ -391,14 +391,90 @@ function NewProjectModal({ onClose, onCreated }) {
   )
 }
 
+function EditProjectModal({ project, onClose, onUpdated }) {
+  const [name, setName] = useState(project.name || '')
+  const [clientName, setClientName] = useState(project.client_name || '')
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
+
+  const handleSubmit = async () => {
+    if (!name.trim()) return setError('Project name is required')
+    setLoading(true)
+    setError('')
+    try {
+      const updated = await api.updateProject(project.id, { name: name.trim(), client_name: clientName.trim() })
+      if (updated.error) throw new Error(updated.error)
+      onUpdated(updated)
+      onClose()
+    } catch (err) { setError(err.message) }
+    setLoading(false)
+  }
+
+  return (
+    <div className="modal-overlay">
+      <div className="modal">
+        <button className="modal-close" onClick={onClose}><X size={18} /></button>
+        <h2>Edit Project</h2>
+        <label>Project Name</label>
+        <input type="text" placeholder="e.g. Disney HQ Bangalore" value={name} onChange={e => setName(e.target.value)} />
+        <label>Client Name <span className="optional">Optional</span></label>
+        <input type="text" placeholder="e.g. Walt Disney India" value={clientName} onChange={e => setClientName(e.target.value)} />
+        {error && <p className="error">{error}</p>}
+        <div className="modal-buttons">
+          <button onClick={onClose} className="btn-secondary">Cancel</button>
+          <button onClick={handleSubmit} disabled={loading} className="btn-primary">{loading ? 'Saving...' : 'Save Changes'}</button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function FleetStats({ shipments }) {
+  const total   = shipments.length
+  const pending = shipments.filter(s => s.status === 'tracking' || !s.status || s.status === 'pending').length
+  const late    = shipments.filter(s => s.delay_days > 0).length
+  const early   = shipments.filter(s => s.delay_days < 0).length
+  const onTime  = total - pending - late - early
+
+  return (
+    <div className="fleet-stats">
+      <div className="stat-card">
+        <div className="stat-icon total"><Package size={18} strokeWidth={2.5} /></div>
+        <div className="stat-text"><span className="stat-num">{total}</span><span className="stat-label">Total Shipments</span></div>
+      </div>
+      <div className="stat-card">
+        <div className="stat-icon ontime"><CheckCircle2 size={18} strokeWidth={2.5} /></div>
+        <div className="stat-text"><span className="stat-num">{onTime}</span><span className="stat-label">On Time</span></div>
+      </div>
+      <div className="stat-card">
+        <div className="stat-icon late"><TrendingDown size={18} strokeWidth={2.5} /></div>
+        <div className="stat-text"><span className="stat-num">{late}</span><span className="stat-label">Delayed</span></div>
+      </div>
+      <div className="stat-card">
+        <div className="stat-icon early"><TrendingUp size={18} strokeWidth={2.5} /></div>
+        <div className="stat-text"><span className="stat-num">{early}</span><span className="stat-label">Early</span></div>
+      </div>
+      <div className="stat-card">
+        <div className="stat-icon processing"><RefreshCw size={18} strokeWidth={2.5} /></div>
+        <div className="stat-text"><span className="stat-num">{pending}</span><span className="stat-label">In Transit</span></div>
+      </div>
+      <div className="route-line">
+        <span className="route-ship"><Ship size={16} strokeWidth={2.5} /></span>
+      </div>
+    </div>
+  )
+}
+
 export default function App() {
   const [projects, setProjects] = useState([])
   const [activeProjectId, setActiveProjectId] = useState(null)
   const [shipments, setShipments] = useState([])
   const [showNewProject, setShowNewProject] = useState(false)
+  const [showEditProject, setShowEditProject] = useState(false)
   const [showNewShipment, setShowNewShipment] = useState(false)
   const [showDeleteProject, setShowDeleteProject] = useState(false)
   const [loading, setLoading] = useState(true)
+  const [refreshingAll, setRefreshingAll] = useState(false)
 
   useEffect(() => { loadProjects() }, [])
   useEffect(() => { if (activeProjectId) loadShipments(activeProjectId) }, [activeProjectId])
@@ -418,6 +494,21 @@ export default function App() {
   const handleRefresh = async (shipmentId) => {
     const updated = await api.refreshShipment(shipmentId)
     if (updated.id) setShipments(prev => prev.map(s => s.id === shipmentId ? updated : s))
+  }
+
+  const handleRefreshAll = async () => {
+    if (shipments.length === 0) return
+    setRefreshingAll(true)
+    const updates = await Promise.all(shipments.map(s => api.refreshShipment(s.id)))
+    setShipments(prev => prev.map(s => {
+      const u = updates.find(x => x.id === s.id)
+      return (u && !u.error) ? u : s
+    }))
+    setRefreshingAll(false)
+  }
+
+  const handleProjectUpdated = (updated) => {
+    setProjects(prev => prev.map(p => p.id === updated.id ? { ...p, ...updated } : p))
   }
 
   const handleUpdateShipment = (shipmentId, updatedShipment) => {
@@ -484,17 +575,25 @@ export default function App() {
                 {activeProject.client_name && <p className="page-subtitle">{activeProject.client_name}</p>}
               </div>
               <div className="page-actions">
+                <button onClick={handleRefreshAll} disabled={refreshingAll || shipments.length === 0} className="btn-outline" title="Refresh all shipments">
+                  <RefreshCw size={15} strokeWidth={2.5} className={refreshingAll ? 'spin' : ''} /> Refresh All
+                </button>
                 <button onClick={handleDownload} className="btn-outline">
                   <Download size={15} strokeWidth={2.5} /> Excel
                 </button>
                 <button onClick={() => setShowNewShipment(true)} className="btn-primary">
                   <Plus size={15} strokeWidth={2.5} /> Add Shipment
                 </button>
-                <button onClick={() => setShowDeleteProject(true)} className="icon-btn delete">
+                <button onClick={() => setShowEditProject(true)} className="icon-btn edit" title="Edit project">
+                  <Pencil size={16} strokeWidth={2.5} />
+                </button>
+                <button onClick={() => setShowDeleteProject(true)} className="icon-btn delete" title="Delete project">
                   <Trash2 size={16} strokeWidth={2.5} />
                 </button>
               </div>
             </div>
+
+            {shipments.length > 0 && <FleetStats shipments={shipments} />}
 
             {shipments.length === 0
               ? (
@@ -538,6 +637,14 @@ export default function App() {
           projectId={activeProjectId}
           onClose={() => setShowNewShipment(false)}
           onCreated={shipment => setShipments(prev => [shipment, ...prev])}
+        />
+      )}
+
+      {showEditProject && (
+        <EditProjectModal
+          project={activeProject}
+          onClose={() => setShowEditProject(false)}
+          onUpdated={handleProjectUpdated}
         />
       )}
 

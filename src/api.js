@@ -10,6 +10,7 @@ async function request(url, options = {}) {
 
 export const getProjects     = () => request('/api/projects')
 export const createProject   = (data) => request('/api/projects', { method: 'POST', body: JSON.stringify(data) })
+export const updateProject = (id, data) => request(`/api/projects/${id}`, { method: 'PUT', body: JSON.stringify(data) })
 export const deleteProject   = (id) => request(`/api/projects/${id}`, { method: 'DELETE' })
 export const getShipments    = (projectId) => request(`/api/shipments/project/${projectId}`)
 export const createShipment  = (data) => request('/api/shipments', { method: 'POST', body: JSON.stringify(data) })
