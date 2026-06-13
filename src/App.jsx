@@ -6,7 +6,7 @@ import {
   Package, Ship, Target, RefreshCw, Pencil, Trash2, Plus, Download,
   AlertTriangle, CheckCircle2, X, Send, LogIn, MapPin,
   Anchor, ArrowDownToLine, ArrowUpFromLine, Flag, TrendingDown, TrendingUp,
-  ChevronDown, ChevronUp
+  ChevronDown, ChevronUp, Sun, Moon, LayoutGrid, FolderKanban, ArrowRight, Clock
 } from 'lucide-react'
 
 function formatDate(d) {
@@ -53,6 +53,48 @@ const EVENT_ICONS = {
   inland_destination_arrival: Flag,
 }
 
+// ── status helpers ──────────────────────────────────────────
+// Maps a shipment's raw backend status to a display status used
+// for the card pill, progress color, and filter bar.
+function getDisplayStatus(shipment) {
+  const { status, delay_days } = shipment
+  if (!status || status === 'tracking' || status === 'pending') return 'pending'
+  if (status === 'arrived') return 'delivered'
+  if (status === 'delayed' || delay_days > 0) return 'delayed'
+  if (status === 'early' || delay_days < 0) return 'early'
+  if (status === 'customs') return 'customs'
+  return 'in_transit'
+}
+
+const STATUS_META = {
+  pending:    { label: 'Pending',    css: 's-pending',    processing: true },
+  in_transit: { label: 'In Transit', css: 's-in_transit', processing: false },
+  customs:    { label: 'Customs',    css: 's-customs',    processing: false },
+  delayed:    { label: 'Delayed',    css: 's-delayed',    processing: false },
+  early:      { label: 'Early',      css: 's-early',      processing: false },
+  on_time:    { label: 'On Time',    css: 's-on_time',    processing: false },
+  delivered:  { label: 'Delivered',  css: 's-arrived',    processing: false },
+}
+
+const FILTERS = ['all', 'in_transit', 'customs', 'delayed', 'delivered', 'pending']
+
+// progress 0-100 derived from gocomet event completion, falling back
+// to a status-based estimate when no live timeline exists yet.
+function getProgress(shipment) {
+  const events = shipment.gocomet_events
+  if (events && events.length > 0) {
+    const done = events.filter(e => !!e.actual_date).length
+    return Math.round((done / events.length) * 100)
+  }
+  const ds = getDisplayStatus(shipment)
+  if (ds === 'delivered') return 100
+  if (ds === 'pending') return 4
+  if (ds === 'delayed') return 55
+  if (ds === 'early') return 70
+  if (ds === 'customs') return 85
+  return 45
+}
+
 function Timeline({ events }) {
   if (!events || events.length === 0) return (
     <div className="no-live">
@@ -90,7 +132,7 @@ function Timeline({ events }) {
 
 function DelayBadge({ delayDays, status, predictedArrival, expectedArrival }) {
   if (status === 'tracking') return (
-    <div className="delay-badge processing">
+    <div className="delay-badge processing s-pending">
       <RefreshCw size={18} strokeWidth={2.5} />
       <span>Fetching live data — click Refresh</span>
     </div>
@@ -98,65 +140,39 @@ function DelayBadge({ delayDays, status, predictedArrival, expectedArrival }) {
   if (!status || status === 'pending') return null
 
   if (status === 'arrived') return (
-    <div className="delay-badge ontime">
+    <div className="delay-badge s-arrived">
       <div className="delay-icon"><CheckCircle2 size={22} strokeWidth={2.5} /></div>
-      <div className="delay-main">
-        <span className="delay-text">Arrived</span>
-      </div>
+      <div className="delay-main"><span className="delay-text">Arrived</span></div>
       {predictedArrival && <span className="delay-sub">Arrived {formatDate(predictedArrival)}</span>}
     </div>
   )
 
   if (delayDays > 0) return (
-    <div className="delay-badge late">
+    <div className="delay-badge s-delayed">
       <div className="delay-icon"><TrendingDown size={22} strokeWidth={2.5} /></div>
       <div className="delay-main">
         <span className="delay-num">{delayDays}</span>
         <span className="delay-text">Day{delayDays > 1 ? 's' : ''} Late</span>
       </div>
-      {predictedArrival && (
-        <span className="delay-sub">Predicted {formatDate(predictedArrival)} · Expected {formatDate(expectedArrival)}</span>
-      )}
+      {predictedArrival && <span className="delay-sub">Predicted {formatDate(predictedArrival)} · Expected {formatDate(expectedArrival)}</span>}
     </div>
   )
   if (delayDays < 0) return (
-    <div className="delay-badge early">
+    <div className="delay-badge s-early">
       <div className="delay-icon"><TrendingUp size={22} strokeWidth={2.5} /></div>
       <div className="delay-main">
         <span className="delay-num">{Math.abs(delayDays)}</span>
         <span className="delay-text">Day{Math.abs(delayDays) > 1 ? 's' : ''} Early</span>
       </div>
-      {predictedArrival && (
-        <span className="delay-sub">Predicted {formatDate(predictedArrival)} · Expected {formatDate(expectedArrival)}</span>
-      )}
+      {predictedArrival && <span className="delay-sub">Predicted {formatDate(predictedArrival)} · Expected {formatDate(expectedArrival)}</span>}
     </div>
   )
   return (
-    <div className="delay-badge ontime">
+    <div className="delay-badge s-on_time">
       <div className="delay-icon"><CheckCircle2 size={22} strokeWidth={2.5} /></div>
-      <div className="delay-main">
-        <span className="delay-text">On Time</span>
-      </div>
+      <div className="delay-main"><span className="delay-text">On Time</span></div>
       {predictedArrival && <span className="delay-sub">Predicted {formatDate(predictedArrival)}</span>}
     </div>
-  )
-}
-
-function CompactStatus({ delayDays, status }) {
-  if (status === 'tracking' || !status || status === 'pending') return (
-    <span className="compact-status processing">Pending</span>
-  )
-  if (status === 'arrived') return (
-    <span className="compact-status ontime"><CheckCircle2 size={13} strokeWidth={2.5} /> Arrived</span>
-  )
-  if (delayDays > 0) return (
-    <span className="compact-status late"><TrendingDown size={13} strokeWidth={2.5} /> {delayDays}d Late</span>
-  )
-  if (delayDays < 0) return (
-    <span className="compact-status early"><TrendingUp size={13} strokeWidth={2.5} /> {Math.abs(delayDays)}d Early</span>
-  )
-  return (
-    <span className="compact-status ontime"><CheckCircle2 size={13} strokeWidth={2.5} /> On Time</span>
   )
 }
 
@@ -211,23 +227,11 @@ function EditShipmentModal({ shipment, onClose, onUpdated }) {
         <button className="modal-close" onClick={onClose}><X size={18} /></button>
         <h2>Edit Shipment</h2>
         <label>Shipment Name <span className="optional">Optional</span></label>
-        <input
-          type="text"
-          value={form.shipment_name}
-          onChange={e => setForm({...form, shipment_name: e.target.value})}
-        />
+        <input type="text" value={form.shipment_name} onChange={e => setForm({...form, shipment_name: e.target.value})} />
         <label>Container Number</label>
-        <input
-          type="text"
-          value={form.container_number}
-          onChange={e => setForm({...form, container_number: e.target.value.toUpperCase()})}
-        />
+        <input type="text" value={form.container_number} onChange={e => setForm({...form, container_number: e.target.value.toUpperCase()})} />
         <label>Expected Arrival Date</label>
-        <input
-          type="date"
-          value={form.expected_arrival_date}
-          onChange={e => setForm({...form, expected_arrival_date: e.target.value})}
-        />
+        <input type="date" value={form.expected_arrival_date} onChange={e => setForm({...form, expected_arrival_date: e.target.value})} />
         {error && <p className="error">{error}</p>}
         <div className="modal-buttons">
           <button onClick={onClose} className="btn-secondary">Cancel</button>
@@ -240,11 +244,22 @@ function EditShipmentModal({ shipment, onClose, onUpdated }) {
   )
 }
 
-function ShipmentCard({ shipment, onRefresh, onDelete, onUpdate }) {
+// ── Premium shipment card matching the reference design ────────
+function ShipmentCard({ shipment, onRefresh, onDelete, onUpdate, projectName }) {
   const [refreshing, setRefreshing] = useState(false)
   const [showDeleteModal, setShowDeleteModal] = useState(false)
   const [showEditModal, setShowEditModal] = useState(false)
   const [expanded, setExpanded] = useState(false)
+  const [barWidth, setBarWidth] = useState(0)
+
+  const displayStatus = getDisplayStatus(shipment)
+  const meta = STATUS_META[displayStatus] || STATUS_META.in_transit
+  const progress = getProgress(shipment)
+
+  useEffect(() => {
+    const t = setTimeout(() => setBarWidth(progress), 150)
+    return () => clearTimeout(t)
+  }, [progress])
 
   const handleRefresh = async (e) => {
     e.stopPropagation()
@@ -253,30 +268,78 @@ function ShipmentCard({ shipment, onRefresh, onDelete, onUpdate }) {
     setRefreshing(false)
   }
 
+  const origin = shipment.origin || shipment.origin_port || '—'
+  const dest = shipment.destination || shipment.destination_port || '—'
+
+  const etaText = displayStatus === 'delivered'
+    ? 'Arrived'
+    : (shipment.predicted_arrival ? formatDate(shipment.predicted_arrival) : formatDate(shipment.expected_arrival_date))
+
   return (
-    <div className={`shipment-card ${expanded ? 'expanded' : ''}`}>
-      <div className="shipment-header" onClick={() => setExpanded(!expanded)}>
-        <div className="shipment-info">
-          <h3>{shipment.shipment_name || shipment.container_number}</h3>
-          <div className="shipment-meta">
-            <span className="meta-pill"><Package size={13} strokeWidth={2.5} /> {shipment.container_number}</span>
-            {shipment.carrier && <span className="meta-pill"><Ship size={13} strokeWidth={2.5} /> {shipment.carrier}</span>}
-            <span className="meta-pill accent"><Target size={13} strokeWidth={2.5} /> Expected {formatDate(shipment.expected_arrival_date)}</span>
-            {!expanded && <CompactStatus delayDays={shipment.delay_days} status={shipment.status} />}
-          </div>
+    <div className={`shipment-card ${meta.css} ${expanded ? 'expanded' : ''}`}>
+      <div className="card-top" onClick={() => setExpanded(!expanded)}>
+        <div>
+          <div className="card-id">{shipment.container_number}</div>
+          {(shipment.shipment_name && shipment.shipment_name !== shipment.container_number) && (
+            <div style={{ fontSize: '0.75rem', color: 'var(--text-dim)', fontWeight: 600, marginTop: 4 }}>
+              {shipment.shipment_name}{projectName ? ` · ${projectName}` : ''}
+            </div>
+          )}
         </div>
-        <div className="shipment-actions">
-          <button onClick={handleRefresh} disabled={refreshing} className="icon-btn refresh" title="Refresh">
-            <RefreshCw size={16} strokeWidth={2.5} className={refreshing ? 'spin' : ''} />
+        <span className={`status-pill ${meta.processing ? 'processing' : ''}`}>
+          <span className="dot" /> {meta.label.toUpperCase()}
+        </span>
+      </div>
+
+      <div className="card-route">
+        <div className="route-point">
+          <div className="route-label">Origin</div>
+          <div className="route-city">{origin}</div>
+        </div>
+        <div className="route-arrow"><ArrowRight size={14} strokeWidth={2.5} /></div>
+        <div className="route-point dest">
+          <div className="route-label">Dest</div>
+          <div className="route-city">{dest}</div>
+        </div>
+      </div>
+
+      <div className="card-progress">
+        <div className="progress-head">
+          <span className="progress-label">Progress</span>
+          <span className="progress-pct">{progress}%</span>
+        </div>
+        <div className="progress-track">
+          <div className="progress-fill" style={{ width: `${barWidth}%` }} />
+        </div>
+      </div>
+
+      <div className="card-footer">
+        <div className="eta-block">
+          <Clock size={14} strokeWidth={2.5} style={{ color: 'var(--text-faint)', flexShrink: 0 }} />
+          <span className="eta-label">ETA</span>
+          <span className="eta-value">{etaText}</span>
+          {displayStatus === 'delayed' && shipment.delay_days > 0 && (
+            <span className="eta-delay"><TrendingDown size={12} strokeWidth={3} /> {shipment.delay_days}d Late</span>
+          )}
+          {displayStatus === 'early' && shipment.delay_days < 0 && (
+            <span className="eta-delay"><TrendingUp size={12} strokeWidth={3} /> {Math.abs(shipment.delay_days)}d Early</span>
+          )}
+          {displayStatus === 'in_transit' && (
+            <span className="eta-delay">On Time</span>
+          )}
+        </div>
+        <div className="card-actions">
+          <button onClick={handleRefresh} disabled={refreshing} className={`icon-btn refresh ${refreshing ? 'spin-active' : ''}`} title="Refresh">
+            <RefreshCw size={14} strokeWidth={2.5} />
           </button>
           <button onClick={(e) => { e.stopPropagation(); setShowEditModal(true) }} className="icon-btn edit" title="Edit">
-            <Pencil size={16} strokeWidth={2.5} />
+            <Pencil size={14} strokeWidth={2.5} />
           </button>
           <button onClick={(e) => { e.stopPropagation(); setShowDeleteModal(true) }} className="icon-btn delete" title="Delete">
-            <Trash2 size={16} strokeWidth={2.5} />
+            <Trash2 size={14} strokeWidth={2.5} />
           </button>
-          <button className="icon-btn chevron" title={expanded ? 'Collapse' : 'Expand'}>
-            {expanded ? <ChevronUp size={18} strokeWidth={2.5} /> : <ChevronDown size={18} strokeWidth={2.5} />}
+          <button onClick={() => setExpanded(!expanded)} className="icon-btn chevron" title={expanded ? 'Collapse' : 'Expand'}>
+            {expanded ? <ChevronUp size={16} strokeWidth={2.5} /> : <ChevronDown size={16} strokeWidth={2.5} />}
           </button>
         </div>
       </div>
@@ -289,12 +352,8 @@ function ShipmentCard({ shipment, onRefresh, onDelete, onUpdate }) {
             predictedArrival={shipment.predicted_arrival}
             expectedArrival={shipment.expected_arrival_date}
           />
-
           <Timeline events={shipment.gocomet_events} />
-
-          {shipment.last_updated && (
-            <p className="last-updated">Updated {toIST(shipment.last_updated)}</p>
-          )}
+          {shipment.last_updated && <p className="last-updated">Updated {toIST(shipment.last_updated)}</p>}
         </div>
       )}
 
@@ -312,10 +371,7 @@ function ShipmentCard({ shipment, onRefresh, onDelete, onUpdate }) {
         <EditShipmentModal
           shipment={shipment}
           onClose={() => setShowEditModal(false)}
-          onUpdated={updated => {
-            onUpdate(shipment.id, updated)
-            setShowEditModal(false)
-          }}
+          onUpdated={updated => { onUpdate(shipment.id, updated); setShowEditModal(false) }}
         />
       )}
     </div>
@@ -347,25 +403,11 @@ function NewShipmentModal({ projectId, onClose, onCreated }) {
         <button className="modal-close" onClick={onClose}><X size={18} /></button>
         <h2>Add Shipment</h2>
         <label>Shipment Name <span className="optional">Optional</span></label>
-        <input
-          type="text"
-          placeholder="e.g. Andreu World — Phase 2"
-          value={form.shipment_name}
-          onChange={e => setForm({...form, shipment_name: e.target.value})}
-        />
+        <input type="text" placeholder="e.g. Andreu World — Phase 2" value={form.shipment_name} onChange={e => setForm({...form, shipment_name: e.target.value})} />
         <label>Container Number</label>
-        <input
-          type="text"
-          placeholder="e.g. HMMU2204997"
-          value={form.container_number}
-          onChange={e => setForm({...form, container_number: e.target.value.toUpperCase()})}
-        />
+        <input type="text" placeholder="e.g. HMMU2204997" value={form.container_number} onChange={e => setForm({...form, container_number: e.target.value.toUpperCase()})} />
         <label>Expected Arrival Date</label>
-        <input
-          type="date"
-          value={form.expected_arrival_date}
-          onChange={e => setForm({...form, expected_arrival_date: e.target.value})}
-        />
+        <input type="date" value={form.expected_arrival_date} onChange={e => setForm({...form, expected_arrival_date: e.target.value})} />
         {error && <p className="error">{error}</p>}
         <div className="modal-buttons">
           <button onClick={onClose} className="btn-secondary">Cancel</button>
@@ -450,47 +492,63 @@ function EditProjectModal({ project, onClose, onUpdated }) {
 
 function FleetStats({ shipments }) {
   const total   = shipments.length
-  const pending = shipments.filter(s => s.status === 'tracking' || !s.status || s.status === 'pending').length
-  const arrived = shipments.filter(s => s.status === 'arrived').length
-  const late    = shipments.filter(s => s.status !== 'arrived' && s.delay_days > 0).length
-  const early   = shipments.filter(s => s.status !== 'arrived' && s.delay_days < 0).length
-  const inTransit = total - pending - arrived
-  const onTime  = inTransit - late - early
+  const pending = shipments.filter(s => getDisplayStatus(s) === 'pending').length
+  const arrived = shipments.filter(s => getDisplayStatus(s) === 'delivered').length
+  const late    = shipments.filter(s => getDisplayStatus(s) === 'delayed').length
+  const early   = shipments.filter(s => getDisplayStatus(s) === 'early').length
+  const inTransit = total - pending - arrived - late - early
 
   return (
     <div className="fleet-stats">
-      <div className="stat-card">
-        <div className="stat-icon total"><Package size={18} strokeWidth={2.5} /></div>
-        <div className="stat-text"><span className="stat-num">{total}</span><span className="stat-label">Total Shipments</span></div>
+      <div className="stat-card s-pending">
+        <div className="stat-icon"><Package size={18} strokeWidth={2.5} /></div>
+        <div className="stat-text"><span className="stat-num">{total}</span><span className="stat-label">Total</span></div>
       </div>
-      <div className="stat-card">
-        <div className="stat-icon ontime"><CheckCircle2 size={18} strokeWidth={2.5} /></div>
-        <div className="stat-text"><span className="stat-num">{onTime}</span><span className="stat-label">On Time</span></div>
-      </div>
-      <div className="stat-card">
-        <div className="stat-icon late"><TrendingDown size={18} strokeWidth={2.5} /></div>
-        <div className="stat-text"><span className="stat-num">{late}</span><span className="stat-label">Delayed</span></div>
-      </div>
-      <div className="stat-card">
-        <div className="stat-icon early"><TrendingUp size={18} strokeWidth={2.5} /></div>
-        <div className="stat-text"><span className="stat-num">{early}</span><span className="stat-label">Early</span></div>
-      </div>
-      <div className="stat-card">
-        <div className="stat-icon processing"><RefreshCw size={18} strokeWidth={2.5} /></div>
+      <div className="stat-card s-in_transit">
+        <div className="stat-icon"><Ship size={18} strokeWidth={2.5} /></div>
         <div className="stat-text"><span className="stat-num">{inTransit}</span><span className="stat-label">In Transit</span></div>
       </div>
-      <div className="stat-card">
-        <div className="stat-icon arrived"><Package size={18} strokeWidth={2.5} /></div>
-        <div className="stat-text"><span className="stat-num">{arrived}</span><span className="stat-label">Arrived</span></div>
+      <div className="stat-card s-delayed">
+        <div className="stat-icon"><TrendingDown size={18} strokeWidth={2.5} /></div>
+        <div className="stat-text"><span className="stat-num">{late}</span><span className="stat-label">Delayed</span></div>
+      </div>
+      <div className="stat-card s-early">
+        <div className="stat-icon"><TrendingUp size={18} strokeWidth={2.5} /></div>
+        <div className="stat-text"><span className="stat-num">{early}</span><span className="stat-label">Early</span></div>
+      </div>
+      <div className="stat-card s-arrived">
+        <div className="stat-icon"><Target size={18} strokeWidth={2.5} /></div>
+        <div className="stat-text"><span className="stat-num">{arrived}</span><span className="stat-label">Delivered</span></div>
       </div>
     </div>
   )
 }
 
+function ThemeToggle({ theme, onToggle }) {
+  return (
+    <button className="theme-toggle" onClick={onToggle} title="Toggle theme" aria-label="Toggle theme">
+      <span className="knob">
+        {theme === 'dark' ? <Moon size={12} strokeWidth={3} /> : <Sun size={12} strokeWidth={3} />}
+      </span>
+    </button>
+  )
+}
+
 export default function App() {
+  const [theme, setTheme] = useState(() => {
+    const saved = typeof localStorage !== 'undefined' && localStorage.getItem('s19-theme')
+    if (saved) return saved
+    return window.matchMedia?.('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
+  })
+
+  const [view, setView] = useState('project') // 'project' | 'unified'
   const [projects, setProjects] = useState([])
   const [activeProjectId, setActiveProjectId] = useState(null)
   const [shipments, setShipments] = useState([])
+  const [allShipments, setAllShipments] = useState([])
+  const [unifiedLoading, setUnifiedLoading] = useState(false)
+  const [unifiedFilter, setUnifiedFilter] = useState('all')
+
   const [showNewProject, setShowNewProject] = useState(false)
   const [showEditProject, setShowEditProject] = useState(false)
   const [showNewShipment, setShowNewShipment] = useState(false)
@@ -498,8 +556,14 @@ export default function App() {
   const [loading, setLoading] = useState(true)
   const [refreshingAll, setRefreshingAll] = useState(false)
 
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme)
+    try { localStorage.setItem('s19-theme', theme) } catch { /* ignore */ }
+  }, [theme])
+
   useEffect(() => { loadProjects() }, [])
   useEffect(() => { if (activeProjectId) loadShipments(activeProjectId) }, [activeProjectId])
+  useEffect(() => { if (view === 'unified' && projects.length > 0) loadAllShipments() }, [view, projects])
 
   const loadProjects = async () => {
     const data = await api.getProjects()
@@ -513,9 +577,22 @@ export default function App() {
     setShipments(Array.isArray(data) ? data : [])
   }
 
+  const loadAllShipments = async () => {
+    setUnifiedLoading(true)
+    const results = await Promise.all(projects.map(async p => {
+      const data = await api.getShipments(p.id)
+      return Array.isArray(data) ? data.map(s => ({ ...s, _projectName: p.name, _projectId: p.id })) : []
+    }))
+    setAllShipments(results.flat())
+    setUnifiedLoading(false)
+  }
+
   const handleRefresh = async (shipmentId) => {
     const updated = await api.refreshShipment(shipmentId)
-    if (updated.id) setShipments(prev => prev.map(s => s.id === shipmentId ? updated : s))
+    if (updated.id) {
+      setShipments(prev => prev.map(s => s.id === shipmentId ? updated : s))
+      setAllShipments(prev => prev.map(s => s.id === shipmentId ? { ...s, ...updated } : s))
+    }
   }
 
   const handleRefreshAll = async () => {
@@ -535,11 +612,13 @@ export default function App() {
 
   const handleUpdateShipment = (shipmentId, updatedShipment) => {
     setShipments(prev => prev.map(s => s.id === shipmentId ? { ...s, ...updatedShipment } : s))
+    setAllShipments(prev => prev.map(s => s.id === shipmentId ? { ...s, ...updatedShipment } : s))
   }
 
   const handleDeleteShipment = async (shipmentId) => {
     await api.deleteShipment(shipmentId)
     setShipments(prev => prev.filter(s => s.id !== shipmentId))
+    setAllShipments(prev => prev.filter(s => s.id !== shipmentId))
   }
 
   const handleDeleteProject = async () => {
@@ -557,8 +636,12 @@ export default function App() {
 
   const activeProject = projects.find(p => p.id === activeProjectId)
 
+  const filteredUnified = unifiedFilter === 'all'
+    ? allShipments
+    : allShipments.filter(s => getDisplayStatus(s) === unifiedFilter)
+
   if (loading) return (
-    <div className="loading">
+    <div className="loading" data-theme={theme}>
       <img src={logo} alt="Studio19" className="loading-logo" />
       <span>Loading Studio19 Tracker...</span>
     </div>
@@ -569,81 +652,155 @@ export default function App() {
       <header className="app-header">
         <div className="header-brand">
           <img src={logo} alt="Studio19" className="brand-logo" />
-          <h1>Studio19 <span>— Shipment Tracker</span></h1>
+          <h1>Studio19<span>Shipment Tracker</span></h1>
+        </div>
+        <div className="header-right">
+          <ThemeToggle theme={theme} onToggle={() => setTheme(t => t === 'dark' ? 'light' : 'dark')} />
         </div>
       </header>
 
-      <div className="project-tabs">
-        {projects.map(p => (
-          <button
-            key={p.id}
-            className={`project-tab ${p.id === activeProjectId ? 'active' : ''}`}
-            onClick={() => setActiveProjectId(p.id)}
-          >
-            {p.name}
-          </button>
-        ))}
-        <button className="project-tab new-tab" onClick={() => setShowNewProject(true)}>
-          <Plus size={14} strokeWidth={3} /> New Project
+      <div className="view-switch">
+        <button className={view === 'project' ? 'active' : ''} onClick={() => setView('project')}>
+          <FolderKanban size={15} strokeWidth={2.5} /> Project View
+        </button>
+        <button className={view === 'unified' ? 'active' : ''} onClick={() => setView('unified')}>
+          <LayoutGrid size={15} strokeWidth={2.5} /> Unified View
         </button>
       </div>
 
+      {view === 'project' && (
+        <div className="project-tabs">
+          {projects.map(p => (
+            <button
+              key={p.id}
+              className={`project-tab ${p.id === activeProjectId ? 'active' : ''}`}
+              onClick={() => setActiveProjectId(p.id)}
+            >
+              {p.name}
+            </button>
+          ))}
+          <button className="project-tab new-tab" onClick={() => setShowNewProject(true)}>
+            <Plus size={14} strokeWidth={3} /> New Project
+          </button>
+        </div>
+      )}
+
       <main className="main">
-        {activeProject ? (
+        {view === 'project' ? (
+          activeProject ? (
+            <>
+              <div className="page-header">
+                <div>
+                  <h2>{activeProject.name}</h2>
+                  {activeProject.client_name && <p className="page-subtitle">{activeProject.client_name}</p>}
+                </div>
+                <div className="page-actions">
+                  <button onClick={handleRefreshAll} disabled={refreshingAll || shipments.length === 0} className={`icon-btn refresh ${refreshingAll ? 'spin-active' : ''}`} title="Refresh all shipments">
+                    <RefreshCw size={16} strokeWidth={2.5} />
+                  </button>
+                  <button onClick={handleDownload} className="btn-outline">
+                    <Download size={15} strokeWidth={2.5} /> Excel
+                  </button>
+                  <button onClick={() => setShowNewShipment(true)} className="btn-primary">
+                    <Plus size={15} strokeWidth={2.5} /> Add Shipment
+                  </button>
+                  <button onClick={() => setShowEditProject(true)} className="icon-btn edit" title="Edit project">
+                    <Pencil size={16} strokeWidth={2.5} />
+                  </button>
+                  <button onClick={() => setShowDeleteProject(true)} className="icon-btn delete" title="Delete project">
+                    <Trash2 size={16} strokeWidth={2.5} />
+                  </button>
+                </div>
+              </div>
+
+              {shipments.length > 0 && <FleetStats shipments={shipments} />}
+
+              {shipments.length === 0
+                ? (
+                  <div className="empty-state">
+                    <Package size={40} strokeWidth={1.5} />
+                    <p>No shipments yet</p>
+                    <span>Click "Add Shipment" to start tracking your first container</span>
+                  </div>
+                )
+                : <div className="shipments-grid">
+                    {shipments.map(s => (
+                      <ShipmentCard
+                        key={s.id}
+                        shipment={s}
+                        onRefresh={handleRefresh}
+                        onDelete={handleDeleteShipment}
+                        onUpdate={handleUpdateShipment}
+                      />
+                    ))}
+                  </div>
+              }
+            </>
+          ) : (
+            <div className="empty-state">
+              <Package size={40} strokeWidth={1.5} />
+              <p>No projects yet</p>
+              <span>Click "New Project" above to get started</span>
+            </div>
+          )
+        ) : (
           <>
             <div className="page-header">
               <div>
-                <h2>{activeProject.name}</h2>
-                {activeProject.client_name && <p className="page-subtitle">{activeProject.client_name}</p>}
+                <h2>All Shipments</h2>
+                <p className="page-subtitle">Global overview across every project</p>
               </div>
               <div className="page-actions">
-                <button onClick={handleRefreshAll} disabled={refreshingAll || shipments.length === 0} className="icon-btn refresh" title="Refresh all shipments">
-                  <RefreshCw size={16} strokeWidth={2.5} className={refreshingAll ? 'spin' : ''} />
-                </button>
-                <button onClick={handleDownload} className="btn-outline">
-                  <Download size={15} strokeWidth={2.5} /> Excel
-                </button>
-                <button onClick={() => setShowNewShipment(true)} className="btn-primary">
-                  <Plus size={15} strokeWidth={2.5} /> Add Shipment
-                </button>
-                <button onClick={() => setShowEditProject(true)} className="icon-btn edit" title="Edit project">
-                  <Pencil size={16} strokeWidth={2.5} />
-                </button>
-                <button onClick={() => setShowDeleteProject(true)} className="icon-btn delete" title="Delete project">
-                  <Trash2 size={16} strokeWidth={2.5} />
+                <button onClick={loadAllShipments} disabled={unifiedLoading} className={`icon-btn refresh ${unifiedLoading ? 'spin-active' : ''}`} title="Reload">
+                  <RefreshCw size={16} strokeWidth={2.5} />
                 </button>
               </div>
             </div>
 
-            {shipments.length > 0 && <FleetStats shipments={shipments} />}
+            {allShipments.length > 0 && <FleetStats shipments={allShipments} />}
 
-            {shipments.length === 0
-              ? (
-                <div className="empty-state">
-                  <Package size={40} strokeWidth={1.5} />
-                  <p>No shipments yet</p>
-                  <span>Click "Add Shipment" to start tracking your first container</span>
-                </div>
-              )
-              : <div className="shipments-list">
-                  {shipments.map(s => (
-                    <ShipmentCard
-                      key={s.id}
-                      shipment={s}
-                      onRefresh={handleRefresh}
-                      onDelete={handleDeleteShipment}
-                      onUpdate={handleUpdateShipment}
-                    />
-                  ))}
-                </div>
-            }
+            <div className="filter-bar">
+              {FILTERS.map(f => {
+                const meta = f === 'all' ? null : STATUS_META[f]
+                const label = f === 'all' ? 'All' : meta.label
+                return (
+                  <button
+                    key={f}
+                    className={`filter-pill ${meta ? meta.css : ''} ${unifiedFilter === f ? 'active' : ''}`}
+                    onClick={() => setUnifiedFilter(f)}
+                  >
+                    {label}
+                  </button>
+                )
+              })}
+            </div>
+
+            {unifiedLoading && allShipments.length === 0 ? (
+              <div className="empty-state">
+                <RefreshCw size={40} strokeWidth={1.5} className="spin-active" />
+                <p>Loading all shipments…</p>
+              </div>
+            ) : filteredUnified.length === 0 ? (
+              <div className="empty-state">
+                <Package size={40} strokeWidth={1.5} />
+                <p>No shipments found</p>
+                <span>Try a different filter</span>
+              </div>
+            ) : (
+              <div className="shipments-grid">
+                {filteredUnified.map(s => (
+                  <ShipmentCard
+                    key={s.id}
+                    shipment={s}
+                    projectName={s._projectName}
+                    onRefresh={handleRefresh}
+                    onDelete={handleDeleteShipment}
+                    onUpdate={handleUpdateShipment}
+                  />
+                ))}
+              </div>
+            )}
           </>
-        ) : (
-          <div className="empty-state">
-            <Package size={40} strokeWidth={1.5} />
-            <p>No projects yet</p>
-            <span>Click "New Project" above to get started</span>
-          </div>
         )}
       </main>
 
