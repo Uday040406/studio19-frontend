@@ -80,6 +80,24 @@ const FILTERS = ['all', 'in_transit', 'customs', 'delayed', 'delivered', 'pendin
 
 // progress 0-100 derived from gocomet event completion, falling back
 // to a status-based estimate when no live timeline exists yet.
+function getRoute(shipment) {
+  let origin = shipment.origin || shipment.origin_port
+  let dest = shipment.destination || shipment.destination_port
+  const events = shipment.gocomet_events
+  if (events && events.length > 0) {
+    if (!origin) {
+      const e = events.find(e => e.location)
+      if (e) origin = titleCase(e.location)
+    }
+    if (!dest) {
+      for (let i = events.length - 1; i >= 0; i--) {
+        if (events[i].location) { dest = titleCase(events[i].location); break }
+      }
+    }
+  }
+  return { origin: origin || '—', dest: dest || '—' }
+}
+
 function getProgress(shipment) {
   const events = shipment.gocomet_events
   if (events && events.length > 0) {
@@ -268,8 +286,7 @@ function ShipmentCard({ shipment, onRefresh, onDelete, onUpdate, projectName }) 
     setRefreshing(false)
   }
 
-  const origin = shipment.origin || shipment.origin_port || '—'
-  const dest = shipment.destination || shipment.destination_port || '—'
+  const { origin, dest } = getRoute(shipment)
 
   const etaText = displayStatus === 'delivered'
     ? 'Arrived'
