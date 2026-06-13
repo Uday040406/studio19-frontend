@@ -73,7 +73,7 @@ const STATUS_META = {
   delayed:    { label: 'Delayed',    css: 's-delayed',    processing: false },
   early:      { label: 'Early',      css: 's-early',      processing: false },
   on_time:    { label: 'On Time',    css: 's-on_time',    processing: false },
-  delivered:  { label: 'Delivered',  css: 's-arrived',    processing: false },
+  delivered:  { label: 'Arrived',    css: 's-arrived',    processing: false },
 }
 
 const FILTERS = ['all', 'in_transit', 'customs', 'delayed', 'delivered', 'pending']
@@ -102,13 +102,13 @@ function getRoute(shipment) {
 }
 
 function getProgress(shipment) {
+  const ds = getDisplayStatus(shipment)
+  if (ds === 'delivered') return 100
   const events = shipment.gocomet_events
   if (events && events.length > 0) {
     const done = events.filter(e => !!e.actual_date).length
     return Math.round((done / events.length) * 100)
   }
-  const ds = getDisplayStatus(shipment)
-  if (ds === 'delivered') return 100
   if (ds === 'pending') return 4
   if (ds === 'delayed') return 55
   if (ds === 'early') return 70
@@ -301,11 +301,6 @@ function ShipmentCard({ shipment, onRefresh, onDelete, onUpdate, projectName }) 
         <div className="card-row-top">
           <div className="card-id-block">
             <div className="card-id">{shipment.container_number}</div>
-            {(shipment.shipment_name && shipment.shipment_name !== shipment.container_number) && (
-              <div className="substext">
-                {shipment.shipment_name}{projectName ? ` · ${projectName}` : ''}
-              </div>
-            )}
           </div>
 
           <span className={`status-pill ${meta.processing ? 'processing' : ''}`}>
@@ -542,7 +537,7 @@ function FleetStats({ shipments }) {
       </div>
       <div className="stat-card s-arrived">
         <div className="stat-icon"><Target size={18} strokeWidth={2.5} /></div>
-        <div className="stat-text"><span className="stat-num">{arrived}</span><span className="stat-label">Delivered</span></div>
+        <div className="stat-text"><span className="stat-num">{arrived}</span><span className="stat-label">Arrived</span></div>
       </div>
     </div>
   )

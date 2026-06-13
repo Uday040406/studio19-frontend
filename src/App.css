@@ -494,7 +494,7 @@ button:disabled { opacity: 0.5; cursor: not-allowed; }
   align-items: center;
   gap: 16px;
   flex-shrink: 0;
-  width: 280px;
+  width: 380px;
 }
 .route-point { min-width: 0; flex: 1; }
 .route-point.dest { text-align: right; }
