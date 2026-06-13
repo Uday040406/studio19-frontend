@@ -464,15 +464,28 @@ button:disabled { opacity: 0.5; cursor: not-allowed; }
   position: relative;
   z-index: 1;
   display: flex;
-  align-items: center;
-  gap: 32px;
+  flex-direction: column;
+  gap: 22px;
   padding: 26px 28px;
   cursor: pointer;
 }
 
-.card-id-block { display: flex; flex-direction: column; gap: 5px; min-width: 160px; flex-shrink: 0; }
-.card-id { font-size: 1.25rem; }
+.card-row-top {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+.card-id-block { display: flex; flex-direction: column; gap: 5px; }
+.card-id { font-size: 1.3rem; }
 .card-id-block .substext { font-size: 0.8rem; color: var(--text-dim); font-weight: 600; }
+.card-row-top .status-pill { margin-left: 4px; }
+.card-row-top .card-actions { margin-left: auto; }
+
+.card-row-bottom {
+  display: flex;
+  align-items: center;
+  gap: 36px;
+}
 
 .card-route {
   position: relative;
@@ -481,31 +494,21 @@ button:disabled { opacity: 0.5; cursor: not-allowed; }
   align-items: center;
   gap: 16px;
   flex-shrink: 0;
-  width: 340px;
+  width: 280px;
 }
 .route-point { min-width: 0; flex: 1; }
 .route-point.dest { text-align: right; }
 
 .card-progress { position: relative; z-index: 1; flex: 1; min-width: 160px; }
 
-.card-status-eta {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 8px;
-  flex-shrink: 0;
-}
-
 .card-actions { display: flex; gap: 6px; flex-shrink: 0; }
 .card-actions .icon-btn { width: 32px; height: 32px; }
 
-@media (max-width: 1100px) {
-  .card-row { flex-wrap: wrap; }
-  .card-route { width: 100%; order: 1; }
-  .card-progress { width: 100%; order: 2; }
-  .card-id-block { order: 0; }
-  .card-status-eta { order: 3; align-items: flex-start; flex-direction: row; flex-wrap: wrap; width: 100%; }
-  .card-actions { order: 4; }
+@media (max-width: 900px) {
+  .card-row-bottom { flex-wrap: wrap; gap: 18px; }
+  .card-route { width: 100%; }
+  .card-progress { width: 100%; }
+  .eta-block { width: 100%; }
 }
 .status-pill {
   font-family: 'JetBrains Mono', monospace;

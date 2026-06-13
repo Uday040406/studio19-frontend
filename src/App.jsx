@@ -95,7 +95,10 @@ function getRoute(shipment) {
       }
     }
   }
-  return { origin: origin || '—', dest: dest || '—' }
+  return {
+    origin: (origin || '—').split(',')[0].trim(),
+    dest: (dest || '—').split(',')[0].trim()
+  }
 }
 
 function getProgress(shipment) {
@@ -295,41 +298,59 @@ function ShipmentCard({ shipment, onRefresh, onDelete, onUpdate, projectName }) 
   return (
     <div className={`shipment-card ${meta.css} ${expanded ? 'expanded' : ''}`}>
       <div className="card-row" onClick={() => setExpanded(!expanded)}>
-        <div className="card-id-block">
-          <div className="card-id">{shipment.container_number}</div>
-          {(shipment.shipment_name && shipment.shipment_name !== shipment.container_number) && (
-            <div className="substext">
-              {shipment.shipment_name}{projectName ? ` · ${projectName}` : ''}
-            </div>
-          )}
-        </div>
+        <div className="card-row-top">
+          <div className="card-id-block">
+            <div className="card-id">{shipment.container_number}</div>
+            {(shipment.shipment_name && shipment.shipment_name !== shipment.container_number) && (
+              <div className="substext">
+                {shipment.shipment_name}{projectName ? ` · ${projectName}` : ''}
+              </div>
+            )}
+          </div>
 
-        <div className="card-route">
-          <div className="route-point">
-            <div className="route-label">Origin</div>
-            <div className="route-city">{origin}</div>
-          </div>
-          <div className="route-arrow"><ArrowRight size={14} strokeWidth={2.5} /></div>
-          <div className="route-point dest">
-            <div className="route-label">Dest</div>
-            <div className="route-city">{dest}</div>
-          </div>
-        </div>
-
-        <div className="card-progress">
-          <div className="progress-head">
-            <span className="progress-label">Progress</span>
-            <span className="progress-pct">{progress}%</span>
-          </div>
-          <div className="progress-track">
-            <div className="progress-fill" style={{ width: `${barWidth}%` }} />
-          </div>
-        </div>
-
-        <div className="card-status-eta">
           <span className={`status-pill ${meta.processing ? 'processing' : ''}`}>
             <span className="dot" /> {meta.label.toUpperCase()}
           </span>
+
+          <div className="card-actions">
+            <button onClick={handleRefresh} disabled={refreshing} className={`icon-btn refresh ${refreshing ? 'spin-active' : ''}`} title="Refresh">
+              <RefreshCw size={14} strokeWidth={2.5} />
+            </button>
+            <button onClick={(e) => { e.stopPropagation(); setShowEditModal(true) }} className="icon-btn edit" title="Edit">
+              <Pencil size={14} strokeWidth={2.5} />
+            </button>
+            <button onClick={(e) => { e.stopPropagation(); setShowDeleteModal(true) }} className="icon-btn delete" title="Delete">
+              <Trash2 size={14} strokeWidth={2.5} />
+            </button>
+            <button onClick={(e) => { e.stopPropagation(); setExpanded(!expanded) }} className="icon-btn chevron" title={expanded ? 'Collapse' : 'Expand'}>
+              {expanded ? <ChevronUp size={16} strokeWidth={2.5} /> : <ChevronDown size={16} strokeWidth={2.5} />}
+            </button>
+          </div>
+        </div>
+
+        <div className="card-row-bottom">
+          <div className="card-route">
+            <div className="route-point">
+              <div className="route-label">Origin</div>
+              <div className="route-city">{origin}</div>
+            </div>
+            <div className="route-arrow"><ArrowRight size={14} strokeWidth={2.5} /></div>
+            <div className="route-point dest">
+              <div className="route-label">Dest</div>
+              <div className="route-city">{dest}</div>
+            </div>
+          </div>
+
+          <div className="card-progress">
+            <div className="progress-head">
+              <span className="progress-label">Progress</span>
+              <span className="progress-pct">{progress}%</span>
+            </div>
+            <div className="progress-track">
+              <div className="progress-fill" style={{ width: `${barWidth}%` }} />
+            </div>
+          </div>
+
           <div className="eta-block">
             <Clock size={14} strokeWidth={2.5} style={{ color: 'var(--text-faint)', flexShrink: 0 }} />
             <span className="eta-label">ETA</span>
@@ -344,21 +365,6 @@ function ShipmentCard({ shipment, onRefresh, onDelete, onUpdate, projectName }) 
               <span className="eta-delay">On Time</span>
             )}
           </div>
-        </div>
-
-        <div className="card-actions">
-          <button onClick={handleRefresh} disabled={refreshing} className={`icon-btn refresh ${refreshing ? 'spin-active' : ''}`} title="Refresh">
-            <RefreshCw size={14} strokeWidth={2.5} />
-          </button>
-          <button onClick={(e) => { e.stopPropagation(); setShowEditModal(true) }} className="icon-btn edit" title="Edit">
-            <Pencil size={14} strokeWidth={2.5} />
-          </button>
-          <button onClick={(e) => { e.stopPropagation(); setShowDeleteModal(true) }} className="icon-btn delete" title="Delete">
-            <Trash2 size={14} strokeWidth={2.5} />
-          </button>
-          <button onClick={(e) => { e.stopPropagation(); setExpanded(!expanded) }} className="icon-btn chevron" title={expanded ? 'Collapse' : 'Expand'}>
-            {expanded ? <ChevronUp size={16} strokeWidth={2.5} /> : <ChevronDown size={16} strokeWidth={2.5} />}
-          </button>
         </div>
       </div>
 
