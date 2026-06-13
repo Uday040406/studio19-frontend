@@ -742,26 +742,9 @@ button:disabled { opacity: 0.5; cursor: not-allowed; }
 .error { color: var(--red); font-size: 0.8rem; margin-top: 8px; font-weight: 600; }
 
 /* ============ RESPONSIVE ============ */
-.freight-strip {
-  width: 100%;
-  max-width: 460px;
-  margin: 0 auto 24px;
-  animation: fadeUp 0.4s ease backwards;
-}
-.freight-illustration {
-  width: 100%;
-  height: auto;
-  display: block;
-}
-.empty-state .freight-illustration { max-width: 360px; margin-bottom: 8px; }
-.float-slow { animation: bob 6s ease-in-out infinite; }
-.float-med  { animation: bob 4.2s ease-in-out infinite; animation-delay: 0.4s; }
-.float-fast { animation: bob 3s ease-in-out infinite; animation-delay: 0.8s; }
-@keyframes bob {
-  0%, 100% { transform: translateY(0); }
-  50%      { transform: translateY(-8px); }
-}
+@media (max-width: 768px) {
   .app-header, .view-switch, .project-tabs, .main { padding-left: 16px; padding-right: 16px; }
   .app-header h1 { font-size: 1rem; }
   .page-header h2 { font-size: 1.2rem; }
   .shipments-grid { grid-template-columns: 1fr; }
+}

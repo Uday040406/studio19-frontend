@@ -101,38 +101,6 @@ function getRoute(shipment) {
   }
 }
 
-function FreightIllustration() {
-  return (
-    <svg viewBox="0 0 400 200" className="freight-illustration" aria-hidden="true">
-      <ellipse cx="200" cy="170" rx="180" ry="14" fill="var(--accent)" opacity="0.08" />
-      <g className="float-slow">
-        <rect x="60" y="70" width="46" height="46" rx="6" fill="var(--blue)" opacity="0.18" />
-        <rect x="70" y="80" width="26" height="26" rx="3" fill="var(--blue)" opacity="0.35" />
-      </g>
-      <g className="float-med">
-        <rect x="150" y="40" width="60" height="60" rx="8" fill="var(--accent)" opacity="0.15" />
-        <rect x="164" y="54" width="32" height="32" rx="4" fill="var(--accent)" opacity="0.35" />
-      </g>
-      <g className="float-fast">
-        <rect x="270" y="85" width="40" height="40" rx="6" fill="var(--green)" opacity="0.16" />
-        <rect x="279" y="94" width="22" height="22" rx="3" fill="var(--green)" opacity="0.35" />
-      </g>
-      <g className="float-slow" transform="translate(0,10)">
-        <circle cx="330" cy="50" r="18" fill="var(--purple)" opacity="0.18" />
-      </g>
-      <path d="M40 150 Q120 130 200 150 T360 150" fill="none" stroke="var(--accent)" strokeWidth="2" strokeDasharray="6 8" opacity="0.25" />
-    </svg>
-  )
-}
-
-function FreightStrip() {
-  return (
-    <div className="freight-strip">
-      <FreightIllustration />
-    </div>
-  )
-}
-
 function getProgress(shipment) {
   const ds = getDisplayStatus(shipment)
   if (ds === 'delivered') return 100
@@ -764,13 +732,11 @@ export default function App() {
                 </div>
               </div>
 
-              {shipments.length > 0 && <FreightStrip />}
               {shipments.length > 0 && <FleetStats shipments={shipments} />}
 
               {shipments.length === 0
                 ? (
                   <div className="empty-state">
-                    <FreightIllustration />
                     <Package size={40} strokeWidth={1.5} />
                     <p>No shipments yet</p>
                     <span>Click "Add Shipment" to start tracking your first container</span>
@@ -791,7 +757,6 @@ export default function App() {
             </>
           ) : (
             <div className="empty-state">
-              <FreightIllustration />
               <Package size={40} strokeWidth={1.5} />
               <p>No projects yet</p>
               <span>Click "New Project" above to get started</span>
@@ -811,7 +776,6 @@ export default function App() {
               </div>
             </div>
 
-            {allShipments.length > 0 && <FreightStrip />}
             {allShipments.length > 0 && <FleetStats shipments={allShipments} />}
 
             <div className="filter-bar">
@@ -837,7 +801,6 @@ export default function App() {
               </div>
             ) : filteredUnified.length === 0 ? (
               <div className="empty-state">
-                <FreightIllustration />
                 <Package size={40} strokeWidth={1.5} />
                 <p>No shipments found</p>
                 <span>Try a different filter</span>
