@@ -277,57 +277,58 @@ function ShipmentCard({ shipment, onRefresh, onDelete, onUpdate, projectName }) 
 
   return (
     <div className={`shipment-card ${meta.css} ${expanded ? 'expanded' : ''}`}>
-      <div className="card-top" onClick={() => setExpanded(!expanded)}>
-        <div>
+      <div className="card-row" onClick={() => setExpanded(!expanded)}>
+        <div className="card-id-block">
           <div className="card-id">{shipment.container_number}</div>
           {(shipment.shipment_name && shipment.shipment_name !== shipment.container_number) && (
-            <div style={{ fontSize: '0.75rem', color: 'var(--text-dim)', fontWeight: 600, marginTop: 4 }}>
+            <div className="substext">
               {shipment.shipment_name}{projectName ? ` · ${projectName}` : ''}
             </div>
           )}
         </div>
-        <span className={`status-pill ${meta.processing ? 'processing' : ''}`}>
-          <span className="dot" /> {meta.label.toUpperCase()}
-        </span>
-      </div>
 
-      <div className="card-route">
-        <div className="route-point">
-          <div className="route-label">Origin</div>
-          <div className="route-city">{origin}</div>
+        <div className="card-route">
+          <div className="route-point">
+            <div className="route-label">Origin</div>
+            <div className="route-city">{origin}</div>
+          </div>
+          <div className="route-arrow"><ArrowRight size={14} strokeWidth={2.5} /></div>
+          <div className="route-point dest">
+            <div className="route-label">Dest</div>
+            <div className="route-city">{dest}</div>
+          </div>
         </div>
-        <div className="route-arrow"><ArrowRight size={14} strokeWidth={2.5} /></div>
-        <div className="route-point dest">
-          <div className="route-label">Dest</div>
-          <div className="route-city">{dest}</div>
-        </div>
-      </div>
 
-      <div className="card-progress">
-        <div className="progress-head">
-          <span className="progress-label">Progress</span>
-          <span className="progress-pct">{progress}%</span>
+        <div className="card-progress">
+          <div className="progress-head">
+            <span className="progress-label">Progress</span>
+            <span className="progress-pct">{progress}%</span>
+          </div>
+          <div className="progress-track">
+            <div className="progress-fill" style={{ width: `${barWidth}%` }} />
+          </div>
         </div>
-        <div className="progress-track">
-          <div className="progress-fill" style={{ width: `${barWidth}%` }} />
-        </div>
-      </div>
 
-      <div className="card-footer">
-        <div className="eta-block">
-          <Clock size={14} strokeWidth={2.5} style={{ color: 'var(--text-faint)', flexShrink: 0 }} />
-          <span className="eta-label">ETA</span>
-          <span className="eta-value">{etaText}</span>
-          {displayStatus === 'delayed' && shipment.delay_days > 0 && (
-            <span className="eta-delay"><TrendingDown size={12} strokeWidth={3} /> {shipment.delay_days}d Late</span>
-          )}
-          {displayStatus === 'early' && shipment.delay_days < 0 && (
-            <span className="eta-delay"><TrendingUp size={12} strokeWidth={3} /> {Math.abs(shipment.delay_days)}d Early</span>
-          )}
-          {displayStatus === 'in_transit' && (
-            <span className="eta-delay">On Time</span>
-          )}
+        <div className="card-status-eta">
+          <span className={`status-pill ${meta.processing ? 'processing' : ''}`}>
+            <span className="dot" /> {meta.label.toUpperCase()}
+          </span>
+          <div className="eta-block">
+            <Clock size={14} strokeWidth={2.5} style={{ color: 'var(--text-faint)', flexShrink: 0 }} />
+            <span className="eta-label">ETA</span>
+            <span className="eta-value">{etaText}</span>
+            {displayStatus === 'delayed' && shipment.delay_days > 0 && (
+              <span className="eta-delay"><TrendingDown size={12} strokeWidth={3} /> {shipment.delay_days}d Late</span>
+            )}
+            {displayStatus === 'early' && shipment.delay_days < 0 && (
+              <span className="eta-delay"><TrendingUp size={12} strokeWidth={3} /> {Math.abs(shipment.delay_days)}d Early</span>
+            )}
+            {displayStatus === 'in_transit' && (
+              <span className="eta-delay">On Time</span>
+            )}
+          </div>
         </div>
+
         <div className="card-actions">
           <button onClick={handleRefresh} disabled={refreshing} className={`icon-btn refresh ${refreshing ? 'spin-active' : ''}`} title="Refresh">
             <RefreshCw size={14} strokeWidth={2.5} />
@@ -338,7 +339,7 @@ function ShipmentCard({ shipment, onRefresh, onDelete, onUpdate, projectName }) 
           <button onClick={(e) => { e.stopPropagation(); setShowDeleteModal(true) }} className="icon-btn delete" title="Delete">
             <Trash2 size={14} strokeWidth={2.5} />
           </button>
-          <button onClick={() => setExpanded(!expanded)} className="icon-btn chevron" title={expanded ? 'Collapse' : 'Expand'}>
+          <button onClick={(e) => { e.stopPropagation(); setExpanded(!expanded) }} className="icon-btn chevron" title={expanded ? 'Collapse' : 'Expand'}>
             {expanded ? <ChevronUp size={16} strokeWidth={2.5} /> : <ChevronDown size={16} strokeWidth={2.5} />}
           </button>
         </div>
