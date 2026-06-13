@@ -1,37 +1,39 @@
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
 :root {
-  --purple-950: #1E1147;
-  --purple-900: #2D1B69;
-  --purple-700: #4A2C9E;
-  --purple-500: #7C5CE0;
-  --purple-100: #EFEAFB;
-  --purple-50:  #F8F6FD;
+  /* Canvas + surface ladder (Linear-inspired dark) */
+  --purple-950: #0c0a12;   /* canvas */
+  --purple-900: #F4F2F8;   /* ink (headings, near-white) */
+  --purple-700: #9B8CFA;   /* primary lavender accent */
+  --purple-500: #B6A9FF;   /* lighter lavender (hover/focus) */
+  --purple-100: #232032;   /* surface-2 (elevated/hover) */
+  --purple-50:  #1c1929;   /* surface-1.5 (tab hover) */
 
-  --gold-500: #C9A84C;
-  --gold-100: #FBF3DD;
+  --gold-500: #ECC872;
+  --gold-100: rgba(236,200,114,0.14);
 
-  --ink-900: #1A1A2E;
-  --ink-600: #5C5C7A;
-  --ink-400: #9A9AC0;
-  --ink-200: #E4E1F2;
+  --ink-900: #D4D1DE;   /* body text */
+  --ink-600: #9994A8;   /* subtle/secondary text */
+  --ink-400: #6E6980;   /* tertiary/labels */
+  --ink-200: rgba(255,255,255,0.12);  /* hairline */
+  --hairline-strong: rgba(255,255,255,0.2);
 
-  --surface: #FFFFFF;
-  --bg: #F6F5FB;
-  --border: #EAE7F5;
+  --surface: #161420;  /* surface-1: cards, header, modal, tabs */
+  --bg: #0c0a12;       /* canvas: page bg, recessed elements */
+  --border: rgba(255,255,255,0.08);
 
-  --red-600: #DC2626;
-  --red-50:  #FEF1F1;
-  --green-600: #15803D;
-  --green-50:  #EFFAF3;
+  --red-600: #FF7B8C;
+  --red-50:  rgba(255,123,140,0.14);
+  --green-600: #4ADE80;
+  --green-50:  rgba(74,222,128,0.14);
 }
 
 html, body, #root { width: 100%; min-height: 100vh; }
 
 body {
-  font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
   background: var(--bg);
   color: var(--ink-900);
   font-size: 14px;
@@ -42,10 +44,10 @@ body {
 
 /* ── HEADER ─────────────────────────────────── */
 .app-header {
-  background: linear-gradient(135deg, var(--purple-950) 0%, var(--purple-900) 100%);
-  color: white;
+  background: var(--surface);
+  color: var(--purple-900);
   padding: 18px 40px;
-  border-bottom: 3px solid var(--gold-500);
+  border-bottom: 1px solid var(--border);
   width: 100%;
 }
 .header-brand { display: flex; align-items: center; gap: 14px; }
@@ -54,16 +56,17 @@ body {
   border-radius: 10px;
   object-fit: cover;
   flex-shrink: 0;
+  box-shadow: 0 0 0 1px var(--border);
 }
 .app-header h1 {
   font-size: 1.3rem;
-  font-weight: 800;
-  letter-spacing: 0.01em;
+  font-weight: 700;
+  letter-spacing: -0.01em;
 }
 .app-header h1 span {
-  font-weight: 500;
-  color: var(--purple-100);
-  opacity: 0.8;
+  font-weight: 400;
+  color: var(--ink-600);
+  opacity: 1;
 }
 
 /* ── PROJECT TABS ───────────────────────────── */
@@ -104,9 +107,6 @@ body {
 .main {
   width: 100%;
   padding: 28px 40px 60px;
-  background-image:
-    radial-gradient(circle at 1px 1px, rgba(45,27,105,0.05) 1px, transparent 0);
-  background-size: 28px 28px;
 }
 
 .page-header {
@@ -146,13 +146,13 @@ button {
 button:disabled { opacity: 0.6; cursor: not-allowed; }
 
 .btn-primary {
-  background: var(--purple-900);
-  color: white;
+  background: var(--purple-700);
+  color: var(--bg);
   padding: 10px 18px;
   border-radius: 8px;
   font-size: 0.85rem;
 }
-.btn-primary:hover:not(:disabled) { background: var(--purple-700); transform: translateY(-1px); box-shadow: 0 4px 12px rgba(74,44,158,0.25); }
+.btn-primary:hover:not(:disabled) { background: var(--purple-500); transform: translateY(-1px); box-shadow: 0 4px 14px rgba(155,140,250,0.25); }
 
 .btn-outline {
   background: var(--surface);
@@ -162,7 +162,7 @@ button:disabled { opacity: 0.6; cursor: not-allowed; }
   border-radius: 8px;
   font-size: 0.85rem;
 }
-.btn-outline:hover:not(:disabled) { border-color: var(--purple-500); color: var(--purple-700); transform: translateY(-1px); box-shadow: 0 4px 12px rgba(45,27,105,0.08); }
+.btn-outline:hover:not(:disabled) { border-color: var(--purple-500); color: var(--purple-700); transform: translateY(-1px); box-shadow: 0 4px 14px rgba(0,0,0,0.4); }
 
 .btn-secondary {
   background: var(--bg);
