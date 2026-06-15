@@ -7,7 +7,7 @@ import {
   Package, Ship, Target, RefreshCw, Pencil, Trash2, Plus, Download,
   AlertTriangle, CheckCircle2, X, Send, LogIn, MapPin, ArrowRightLeft,
   Anchor, ArrowDownToLine, ArrowUpFromLine, Flag, TrendingDown, TrendingUp,
-  ChevronDown, ChevronUp, Grid2x2
+  ChevronDown, ChevronUp, Grid2x2, Moon, Sun
 } from 'lucide-react'
 
 function formatDate(d) {
@@ -372,7 +372,7 @@ function ShipmentCard({ shipment, onRefresh, onDelete, onUpdate, projects, curre
               <div className="route-label">Origin</div>
               <div className="route-city">{origin}</div>
             </div>
-            <div className="route-arrow"><ArrowRight size={14} strokeWidth={2.5} /></div>
+            <div className="route-arrow"><ArrowRightLeft size={14} strokeWidth={2.5} /></div>
             <div className="route-point dest">
               <div className="route-label">Dest</div>
               <div className="route-city">{dest}</div>
