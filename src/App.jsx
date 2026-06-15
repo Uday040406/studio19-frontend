@@ -298,7 +298,7 @@ function MoveShipmentModal({ shipment, projects, currentProjectId, onClose, onMo
   )
 }
 
-function ShipmentCard({ shipment, onRefresh, onDelete, onUpdate, projects, currentProjectId }) {
+function ShipmentCard({shipment, onRefresh, onDelete, onUpdate, onRemoveFromView, projects, currentProjectId}) {
   const [refreshing, setRefreshing] = useState(false)
   const [showDeleteModal, setShowDeleteModal] = useState(false)
   const [showEditModal, setShowEditModal] = useState(false)
@@ -431,12 +431,14 @@ function ShipmentCard({ shipment, onRefresh, onDelete, onUpdate, projects, curre
       )}
 
       {showMoveModal && createPortal(
-        <MoveShipmentModal
-          shipment={shipment}
-          projects={projects || []}
-          currentProjectId={currentProjectId}
-          onClose={() => setShowMoveModal(false)}
-          onMoved={(id) => { onDelete(id); setShowMoveModal(false) }}
+        <ShipmentCard
+        key={s.id}
+        shipment={s}
+        onRefresh={handleRefresh}
+        onDelete={handleDeleteShipment}
+        onUpdate={handleUpdateShipment}
+        projects={projects}
+        currentProjectId={s._projectId}
         />,
         document.body
       )}
@@ -686,6 +688,16 @@ export default function App() {
     setAllShipments(prev => prev.filter(s => s.id !== shipmentId))
   }
 
+  const handleRemoveFromView = (shipmentId) => {
+  setShipments(prev =>
+    prev.filter(s => s.id !== shipmentId)
+  )
+
+  setAllShipments(prev =>
+    prev.filter(s => s.id !== shipmentId)
+  )
+}
+
   const handleDeleteProject = async () => {
     await api.deleteProject(activeProjectId)
     const remaining = projects.filter(p => p.id !== activeProjectId)
@@ -790,15 +802,16 @@ export default function App() {
                 <div className="shipments-grid">
                   {shipments.map(s => (
                     <ShipmentCard
-                      key={s.id}
-                      shipment={s}
-                      onRefresh={handleRefresh}
-                      onDelete={handleDeleteShipment}
-                      onUpdate={handleUpdateShipment}
-                      projects={projects}
-                      currentProjectId={activeProjectId}
-                    />
-                  ))}
+                key={s.id}
+                shipment={s}
+                onRefresh={handleRefresh}
+                onDelete={handleDeleteShipment}
+                onUpdate={handleUpdateShipment}
+                onRemoveFromView={handleRemoveFromView}
+                projects={projects}
+                currentProjectId={s._projectId}
+               />
+                ))}
                 </div>
               )}
             </>
