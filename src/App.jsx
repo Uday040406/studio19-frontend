@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import * as api from './api'
 import './App.css'
 import logo from './assets/studio19-logo.png'
@@ -376,22 +377,24 @@ function ShipmentCard({ shipment, onRefresh, onDelete, onUpdate, projectName }) 
         </div>
       )}
 
-      {showDeleteModal && (
+      {showDeleteModal && createPortal(
         <DeleteModal
           title="Delete Shipment?"
           message={`Delete "${shipment.shipment_name || shipment.container_number}"?`}
           showDownload={false}
           onConfirm={() => { setShowDeleteModal(false); onDelete(shipment.id) }}
           onCancel={() => setShowDeleteModal(false)}
-        />
+        />,
+        document.body
       )}
 
-      {showEditModal && (
+      {showEditModal && createPortal(
         <EditShipmentModal
           shipment={shipment}
           onClose={() => setShowEditModal(false)}
           onUpdated={updated => { onUpdate(shipment.id, updated); setShowEditModal(false) }}
-        />
+        />,
+        document.body
       )}
     </div>
   )
@@ -801,7 +804,7 @@ export default function App() {
               </div>
             ) : filteredUnified.length === 0 ? (
               <div className="empty-state">
-                <Package size={40} strokeWidth={1.5} />
+                  <Package size={40} strokeWidth={1.5} />
                 <p>No shipments found</p>
                 <span>Try a different filter</span>
               </div>

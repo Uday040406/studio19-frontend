@@ -476,7 +476,18 @@ button:disabled { opacity: 0.5; cursor: not-allowed; }
   gap: 18px;
 }
 .card-id-block { display: flex; flex-direction: column; gap: 5px; }
-.card-id { font-size: 1.3rem; }
+.card-id {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 1.3rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  background: linear-gradient(120deg, var(--text) 40%, var(--accent) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  transition: letter-spacing 0.3s var(--ease-bounce);
+}
+.shipment-card:hover .card-id { letter-spacing: 0.07em; }
 .card-id-block .substext { font-size: 0.8rem; color: var(--text-dim); font-weight: 600; }
 .card-row-top .status-pill { margin-left: 4px; }
 .card-row-top .card-actions { margin-left: auto; }
