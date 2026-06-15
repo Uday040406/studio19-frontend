@@ -7,7 +7,7 @@ import {
   Package, Ship, Target, RefreshCw, Pencil, Trash2, Plus, Download,
   AlertTriangle, CheckCircle2, X, Send, LogIn, MapPin, ArrowRightLeft,
   Anchor, ArrowDownToLine, ArrowUpFromLine, Flag, TrendingDown, TrendingUp,
-  ChevronDown, ChevronUp
+  ChevronDown, ChevronUp, Grid2x2
 } from 'lucide-react'
 
 function formatDate(d) {
@@ -736,7 +736,7 @@ export default function App() {
           <ArrowRightLeft size={15} strokeWidth={2.5} /> Project View
         </button>
         <button className={view === 'unified' ? 'active' : ''} onClick={() => setView('unified')}>
-          <LayoutGrid size={15} strokeWidth={2.5} /> Unified View
+          <Grid2x2 size={15} strokeWidth={2.5} /> Unified View
         </button>
       </div>
 
