@@ -5,7 +5,7 @@ import './App.css'
 import logo from './assets/studio19-logo.png'
 import {
   Package, Ship, Target, RefreshCw, Pencil, Trash2, Plus, Download,
-  AlertTriangle, CheckCircle2, X, Send, LogIn, MapPin, ArrowRightLeft,
+  AlertTriangle, CheckCircle2, X, Send, LogIn, MapPin, ArrowRightLeft, Clock,
   Anchor, ArrowDownToLine, ArrowUpFromLine, Flag, TrendingDown, TrendingUp,
   ChevronDown, ChevronUp, Grid2x2, Moon, Sun
 } from 'lucide-react'
@@ -54,9 +54,6 @@ const EVENT_ICONS = {
   inland_destination_arrival: Flag,
 }
 
-// ── status helpers ──────────────────────────────────────────
-// Maps a shipment's raw backend status to a display status used
-// for the card pill, progress color, and filter bar.
 function getDisplayStatus(shipment) {
   const { status, delay_days } = shipment
   if (!status || status === 'tracking' || status === 'pending') return 'pending'
@@ -79,8 +76,6 @@ const STATUS_META = {
 
 const FILTERS = ['all', 'in_transit', 'customs', 'delayed', 'delivered', 'pending']
 
-// progress 0-100 derived from gocomet event completion, falling back
-// to a status-based estimate when no live timeline exists yet.
 function getRoute(shipment) {
   let origin = shipment.origin || shipment.origin_port
   let dest = shipment.destination || shipment.destination_port
@@ -266,7 +261,6 @@ function EditShipmentModal({ shipment, onClose, onUpdated }) {
   )
 }
 
-//move shipment function
 function MoveShipmentModal({ shipment, projects, currentProjectId, onClose, onMoved }) {
   const [targetId, setTargetId] = useState('')
   const [loading, setLoading] = useState(false)
@@ -304,7 +298,6 @@ function MoveShipmentModal({ shipment, projects, currentProjectId, onClose, onMo
   )
 }
 
-// ── Premium shipment card matching the reference design ────────
 function ShipmentCard({ shipment, onRefresh, onDelete, onUpdate, projects, currentProjectId }) {
   const [refreshing, setRefreshing] = useState(false)
   const [showDeleteModal, setShowDeleteModal] = useState(false)
@@ -352,7 +345,7 @@ function ShipmentCard({ shipment, onRefresh, onDelete, onUpdate, projects, curre
               <RefreshCw size={14} strokeWidth={2.5} />
             </button>
             <button onClick={(e) => { e.stopPropagation(); setShowMoveModal(true) }} className="icon-btn" title="Move to project">
-              <ArrowRightLeft size={16} strokeWidth={2.5} />
+              <ArrowRightLeft size={14} strokeWidth={2.5} />
             </button>
             <button onClick={(e) => { e.stopPropagation(); setShowEditModal(true) }} className="icon-btn edit" title="Edit">
               <Pencil size={14} strokeWidth={2.5} />
@@ -437,15 +430,16 @@ function ShipmentCard({ shipment, onRefresh, onDelete, onUpdate, projects, curre
         document.body
       )}
 
-      {showMoveModal && (
-       <MoveShipmentModal
-        shipment={shipment}
-        projects={projects}
-        currentProjectId={currentProjectId}
-        onClose={() => setShowMoveModal(false)}
-        onMoved={(id) => { onDelete(id); setShowMoveModal(false) }}
-      />
-)}
+      {showMoveModal && createPortal(
+        <MoveShipmentModal
+          shipment={shipment}
+          projects={projects || []}
+          currentProjectId={currentProjectId}
+          onClose={() => setShowMoveModal(false)}
+          onMoved={(id) => { onDelete(id); setShowMoveModal(false) }}
+        />,
+        document.body
+      )}
     </div>
   )
 }
@@ -563,12 +557,12 @@ function EditProjectModal({ project, onClose, onUpdated }) {
 }
 
 function FleetStats({ shipments }) {
-  const total   = shipments.length
-  const pending = shipments.filter(s => getDisplayStatus(s) === 'pending').length
-  const arrived = shipments.filter(s => getDisplayStatus(s) === 'delivered').length
-  const late    = shipments.filter(s => getDisplayStatus(s) === 'delayed').length
-  const early   = shipments.filter(s => getDisplayStatus(s) === 'early').length
-  const inTransit = total - pending - arrived - late - early
+  const total     = shipments.length
+  const pending   = shipments.filter(s => getDisplayStatus(s) === 'pending').length
+  const arrived   = shipments.filter(s => getDisplayStatus(s) === 'delivered').length
+  const late      = shipments.filter(s => getDisplayStatus(s) === 'delayed').length
+  const early     = shipments.filter(s => getDisplayStatus(s) === 'early').length
+  const inTransit = total - pending - arrived
 
   return (
     <div className="fleet-stats">
@@ -613,14 +607,13 @@ export default function App() {
     return window.matchMedia?.('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
   })
 
-  const [view, setView] = useState('project') // 'project' | 'unified'
+  const [view, setView] = useState('project')
   const [projects, setProjects] = useState([])
   const [activeProjectId, setActiveProjectId] = useState(null)
   const [shipments, setShipments] = useState([])
   const [allShipments, setAllShipments] = useState([])
   const [unifiedLoading, setUnifiedLoading] = useState(false)
   const [unifiedFilter, setUnifiedFilter] = useState('all')
-
   const [showNewProject, setShowNewProject] = useState(false)
   const [showEditProject, setShowEditProject] = useState(false)
   const [showNewShipment, setShowNewShipment] = useState(false)
@@ -787,28 +780,27 @@ export default function App() {
 
               {shipments.length > 0 && <FleetStats shipments={shipments} />}
 
-              {shipments.length === 0
-                ? (
-                  <div className="empty-state">
-                    <Package size={40} strokeWidth={1.5} />
-                    <p>No shipments yet</p>
-                    <span>Click "Add Shipment" to start tracking your first container</span>
-                  </div>
-                )
-                : <div className="shipments-grid">
-                    {shipments.map(s => (
-                      <ShipmentCard
-                        key={s.id}
-                        shipment={s}
-                        onRefresh={handleRefresh}
-                        onDelete={handleDeleteShipment}
-                        onUpdate={handleUpdateShipment}
-                        projects={projects}
-                        currentProjectId={activeProjectId}
-                      />
-                    ))}
-                  </div>
-              }
+              {shipments.length === 0 ? (
+                <div className="empty-state">
+                  <Package size={40} strokeWidth={1.5} />
+                  <p>No shipments yet</p>
+                  <span>Click "Add Shipment" to start tracking your first container</span>
+                </div>
+              ) : (
+                <div className="shipments-grid">
+                  {shipments.map(s => (
+                    <ShipmentCard
+                      key={s.id}
+                      shipment={s}
+                      onRefresh={handleRefresh}
+                      onDelete={handleDeleteShipment}
+                      onUpdate={handleUpdateShipment}
+                      projects={projects}
+                      currentProjectId={activeProjectId}
+                    />
+                  ))}
+                </div>
+              )}
             </>
           ) : (
             <div className="empty-state">
@@ -856,7 +848,7 @@ export default function App() {
               </div>
             ) : filteredUnified.length === 0 ? (
               <div className="empty-state">
-                  <Package size={40} strokeWidth={1.5} />
+                <Package size={40} strokeWidth={1.5} />
                 <p>No shipments found</p>
                 <span>Try a different filter</span>
               </div>
@@ -866,10 +858,11 @@ export default function App() {
                   <ShipmentCard
                     key={s.id}
                     shipment={s}
-                    projectName={s._projectName}
                     onRefresh={handleRefresh}
                     onDelete={handleDeleteShipment}
                     onUpdate={handleUpdateShipment}
+                    projects={projects}
+                    currentProjectId={s._projectId}
                   />
                 ))}
               </div>
