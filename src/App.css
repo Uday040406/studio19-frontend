@@ -380,9 +380,6 @@ button:disabled { opacity: 0.5; cursor: not-allowed; }
   color: var(--s);
   box-shadow: 0 0 0 1px color-mix(in srgb, var(--s) 25%, transparent) inset;
 }
-.stat-text { display: flex; flex-direction: column; line-height: 1.2; min-width: 0; }
-.stat-num { font-size: 1.35rem; font-weight: 800; }
-.stat-label { font-size: 0.68rem; font-weight: 700; color: var(--text-faint); text-transform: uppercase; letter-spacing: 0.07em; white-space: nowrap; }
 
 /* Pulse animations for stat icons */
 @keyframes iconPulse {
@@ -409,6 +406,12 @@ button:disabled { opacity: 0.5; cursor: not-allowed; }
 .stat-icon.early      { animation: iconFloat 2.8s ease-in-out infinite 0.4s; }
 .stat-icon.processing { animation: iconSpin 4s ease-in-out infinite; }
 .stat-icon.arrived    { animation: iconGlow 2.5s ease-in-out infinite; }
+
+.stat-text { display: flex; flex-direction: column; line-height: 1.2; min-width: 0; }
+.stat-num { font-size: 1.35rem; font-weight: 800; }
+.stat-label { font-size: 0.68rem; font-weight: 700; color: var(--text-faint); text-transform: uppercase; letter-spacing: 0.07em; white-space: nowrap; }
+
+
 
 /* ============ PILL FILTER BAR (Unified view) ============ */
 .filter-bar {
