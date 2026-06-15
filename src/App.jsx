@@ -5,9 +5,9 @@ import './App.css'
 import logo from './assets/studio19-logo.png'
 import {
   Package, Ship, Target, RefreshCw, Pencil, Trash2, Plus, Download,
-  AlertTriangle, CheckCircle2, X, Send, LogIn, MapPin,
+  AlertTriangle, CheckCircle2, X, Send, LogIn, MapPin, ArrowRightLeft,
   Anchor, ArrowDownToLine, ArrowUpFromLine, Flag, TrendingDown, TrendingUp,
-  ChevronDown, ChevronUp, Sun, Moon, LayoutGrid, FolderKanban, ArrowRight, Clock
+  ChevronDown, ChevronUp
 } from 'lucide-react'
 
 function formatDate(d) {
@@ -266,13 +266,52 @@ function EditShipmentModal({ shipment, onClose, onUpdated }) {
   )
 }
 
+//move shipment function
+function MoveShipmentModal({ shipment, projects, currentProjectId, onClose, onMoved }) {
+  const [targetId, setTargetId] = useState('')
+  const [loading, setLoading] = useState(false)
+  const others = projects.filter(p => p.id !== currentProjectId)
+
+  const handleMove = async () => {
+    if (!targetId) return
+    setLoading(true)
+    await api.moveShipment(shipment.id, targetId)
+    onMoved(shipment.id)
+    onClose()
+    setLoading(false)
+  }
+
+  return (
+    <div className="modal-overlay">
+      <div className="modal">
+        <button className="modal-close" onClick={onClose}><X size={18} /></button>
+        <h2>Move Shipment</h2>
+        <p>Move <strong>{shipment.shipment_name || shipment.container_number}</strong> to another project.</p>
+        <label>Target Project</label>
+        <select value={targetId} onChange={e => setTargetId(e.target.value)}
+          style={{ width:'100%', padding:'11px 14px', borderRadius:'9px', border:'1.5px solid var(--border)', background:'var(--bg)', color:'var(--ink-900)', fontFamily:'inherit', fontSize:'0.9rem', marginTop:'4px' }}>
+          <option value=''>Select a project...</option>
+          {others.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+        </select>
+        <div className="modal-buttons">
+          <button onClick={onClose} className="btn-secondary">Cancel</button>
+          <button onClick={handleMove} disabled={!targetId || loading} className="btn-primary">
+            {loading ? 'Moving...' : 'Move Shipment'}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 // ── Premium shipment card matching the reference design ────────
-function ShipmentCard({ shipment, onRefresh, onDelete, onUpdate, projectName }) {
+function ShipmentCard({ shipment, onRefresh, onDelete, onUpdate, projects, currentProjectId }) {
   const [refreshing, setRefreshing] = useState(false)
   const [showDeleteModal, setShowDeleteModal] = useState(false)
   const [showEditModal, setShowEditModal] = useState(false)
   const [expanded, setExpanded] = useState(false)
   const [barWidth, setBarWidth] = useState(0)
+  const [showMoveModal, setShowMoveModal] = useState(false)
 
   const displayStatus = getDisplayStatus(shipment)
   const meta = STATUS_META[displayStatus] || STATUS_META.in_transit
@@ -311,6 +350,9 @@ function ShipmentCard({ shipment, onRefresh, onDelete, onUpdate, projectName }) 
           <div className="card-actions">
             <button onClick={handleRefresh} disabled={refreshing} className={`icon-btn refresh ${refreshing ? 'spin-active' : ''}`} title="Refresh">
               <RefreshCw size={14} strokeWidth={2.5} />
+            </button>
+            <button onClick={(e) => { e.stopPropagation(); setShowMoveModal(true) }} className="icon-btn" title="Move to project">
+              <ArrowRightLeft size={16} strokeWidth={2.5} />
             </button>
             <button onClick={(e) => { e.stopPropagation(); setShowEditModal(true) }} className="icon-btn edit" title="Edit">
               <Pencil size={14} strokeWidth={2.5} />
@@ -394,6 +436,16 @@ function ShipmentCard({ shipment, onRefresh, onDelete, onUpdate, projectName }) 
         />,
         document.body
       )}
+
+      {showMoveModal && (
+       <MoveShipmentModal
+        shipment={shipment}
+        projects={projects}
+        currentProjectId={currentProjectId}
+        onClose={() => setShowMoveModal(false)}
+        onMoved={(id) => { onDelete(id); setShowMoveModal(false) }}
+      />
+)}
     </div>
   )
 }
@@ -751,6 +803,8 @@ export default function App() {
                         onRefresh={handleRefresh}
                         onDelete={handleDeleteShipment}
                         onUpdate={handleUpdateShipment}
+                        projects={projects}
+                        currentProjectId={activeProjectId}
                       />
                     ))}
                   </div>

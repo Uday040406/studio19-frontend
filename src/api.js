@@ -17,3 +17,4 @@ export const createShipment  = (data) => request('/api/shipments', { method: 'PO
 export const updateShipment  = (id, data) => request(`/api/shipments/${id}`, { method: 'PUT', body: JSON.stringify(data) })
 export const deleteShipment  = (id) => request(`/api/shipments/${id}`, { method: 'DELETE' })
 export const refreshShipment = (id) => request(`/api/shipments/${id}/refresh`, { method: 'POST' })
+export const moveShipment = (id, projectId) => request(`/api/shipments/${id}/move`, { method: 'PATCH', body: JSON.stringify({ project_id: projectId }) })
