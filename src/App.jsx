@@ -733,7 +733,7 @@ export default function App() {
 
       <div className="view-switch">
         <button className={view === 'project' ? 'active' : ''} onClick={() => setView('project')}>
-          <FolderKanban size={15} strokeWidth={2.5} /> Project View
+          <ArrowRightLeft size={15} strokeWidth={2.5} /> Project View
         </button>
         <button className={view === 'unified' ? 'active' : ''} onClick={() => setView('unified')}>
           <LayoutGrid size={15} strokeWidth={2.5} /> Unified View
