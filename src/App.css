@@ -618,9 +618,19 @@ button:disabled { opacity: 0.5; cursor: not-allowed; }
 /* ============ EXPANDED BODY ============ */
 .shipment-body {
   position: relative; z-index: 1;
+  padding: 0 22px;
+  border-top: 1px solid transparent;
+  overflow: hidden;
+  max-height: 0;
+  opacity: 0;
+  transition: max-height 0.45s cubic-bezier(0.4,0,0.2,1), opacity 0.35s ease, padding 0.35s ease, border-color 0.3s ease;
+}
+.shipment-body.open {
+  max-height: 900px;
+  opacity: 1;
   padding: 18px 22px 22px;
-  border-top: 1px solid var(--border);
-  animation: fadeUp 0.3s ease;
+  border-top-color: var(--border);
+  transition: max-height 0.5s cubic-bezier(0.4,0,0.2,1), opacity 0.4s ease 0.05s, padding 0.3s ease, border-color 0.2s ease;
 }
 
 .delay-badge {

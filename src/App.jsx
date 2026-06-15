@@ -364,18 +364,16 @@ function ShipmentCard({ shipment, onRefresh, onDelete, onUpdate, projectName }) 
         </div>
       </div>
 
-      {expanded && (
-        <div className="shipment-body">
-          <DelayBadge
-            delayDays={shipment.delay_days}
-            status={shipment.status}
-            predictedArrival={shipment.predicted_arrival}
-            expectedArrival={shipment.expected_arrival_date}
-          />
-          <Timeline events={shipment.gocomet_events} />
-          {shipment.last_updated && <p className="last-updated">Updated {toIST(shipment.last_updated)}</p>}
-        </div>
-      )}
+      <div className={`shipment-body${expanded ? ' open' : ''}`}>
+        <DelayBadge
+          delayDays={shipment.delay_days}
+          status={shipment.status}
+          predictedArrival={shipment.predicted_arrival}
+          expectedArrival={shipment.expected_arrival_date}
+        />
+        <Timeline events={shipment.gocomet_events} />
+        {shipment.last_updated && <p className="last-updated">Updated {toIST(shipment.last_updated)}</p>}
+      </div>
 
       {showDeleteModal && createPortal(
         <DeleteModal
