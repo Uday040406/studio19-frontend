@@ -479,10 +479,29 @@ function DraggableShipmentList({ shipments, onReorder, projects, currentProjectI
   const dragIdx = useRef(null)
   const [dragOver, setDragOver] = useState(null)
 
-  const handleDragStart = (i, e) => {
-    dragIdx.current = i
-    e.dataTransfer.effectAllowed = 'move'
-  }
+  const handleDragStart = (e, i) => {
+  setDragIdx(i)
+  // Create tiny ghost pill instead of full card snapshot
+  const ghost = document.createElement('div')
+  ghost.textContent = shipments[i].container_number || 'Shipment'
+  ghost.style.cssText = `
+    position: fixed; top: -999px; left: -999px;
+    background: var(--accent, #A78BFA);
+    color: white;
+    padding: 6px 14px;
+    border-radius: 100px;
+    font-size: 13px;
+    font-weight: 700;
+    font-family: 'JetBrains Mono', monospace;
+    white-space: nowrap;
+    box-shadow: 0 4px 16px rgba(167,139,250,0.4);
+    pointer-events: none;
+  `
+  document.body.appendChild(ghost)
+  e.dataTransfer.setDragImage(ghost, ghost.offsetWidth / 2, 20)
+  // Remove after browser captures snapshot
+  requestAnimationFrame(() => document.body.removeChild(ghost))
+}
 
   const handleDragOver = (i, e) => {
     e.preventDefault()
@@ -514,12 +533,12 @@ function DraggableShipmentList({ shipments, onReorder, projects, currentProjectI
         <div
           key={s.id}
           draggable
-          onDragStart={e => handleDragStart(i, e)}
-          onDragOver={e => handleDragOver(i, e)}
+          onDragStart={(e) => handleDragStart(e, i)}   // ← pass e
+          onDragOver={(e) => e.preventDefault()}
           onDrop={() => handleDrop(i)}
-          onDragEnd={handleDragEnd}
-          className={`drag-wrapper${dragIdx.current === i ? ' is-dragging' : ''}${dragOver === i && dragIdx.current !== i ? ' drag-over' : ''}`}
-        >
+          onDragEnd={() => setDragIdx(null)}            // ← add this, cleans up if drop outside
+          className={`drag-wrapper ${dragIdx === i ? 'dragging' : ''}`}
+         >
           <ShipmentCard
             shipment={s}
             onRefresh={onRefresh}
