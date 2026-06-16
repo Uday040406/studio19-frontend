@@ -32,7 +32,6 @@ function titleCase(str) {
 }
 
 const EVENT_LABELS = {
-  dispatch:                   'Dispatch',
   gate_in:                    'Gate In',
   origin_departure:           'Origin Departure',
   trans_shipment_arrival:     'Transshipment Arrival',
@@ -40,11 +39,11 @@ const EVENT_LABELS = {
   loaded_at_pod:              'Loaded At POD',
   departure_at_pod:           'Departure At POD',
   arrival:                    'Arrival',
+  discharge_at_pod:           'Discharge At POD',
   inland_destination_arrival: 'Inland Destination Arrival',
 }
 
 const EVENT_ICONS = {
-  dispatch:                   Send,
   gate_in:                    LogIn,
   origin_departure:           Anchor,
   trans_shipment_arrival:     ArrowDownToLine,
@@ -52,6 +51,7 @@ const EVENT_ICONS = {
   loaded_at_pod:              ArrowDownToLine,
   departure_at_pod:           ArrowUpFromLine,
   arrival:                    MapPin,
+  discharge_at_pod:           ArrowDownToLine,
   inland_destination_arrival: Flag,
 }
 
