@@ -799,55 +799,6 @@ button:disabled { opacity: 0.5; cursor: not-allowed; }
   .shipments-grid { grid-template-columns: 1fr; }
 }
 
-/* ── DRAG HANDLE (shipment cards) ─────────────────────────── */
-.drag-handle {
-  position: absolute;
-  left: 7px;
-  top: 50%;
-  transform: translateY(-50%);
-  color: var(--text-faint);
-  cursor: grab;
-  opacity: 0;
-  transition: opacity 0.2s ease, color 0.2s ease;
-  z-index: 3;
-  padding: 6px 4px;
-  border-radius: 6px;
-  display: flex;
-  align-items: center;
-}
-.shipment-card:hover .drag-handle {
-  opacity: 1;
-}
-.drag-handle:hover {
-  color: var(--accent);
-}
-.drag-handle:active {
-  cursor: grabbing;
-}
-
-/* Push card-row content slightly right so handle doesn't overlap */
-.shipment-card .card-row {
-  padding-left: 34px;
-}
-
-/* ── DRAG WRAPPER STATES (shipment reorder) ────────────────── */
-.drag-wrapper {
-  position: relative;
-  transition: opacity 0.2s ease;
-}
-.drag-wrapper.is-dragging {
-  opacity: 0.35;
-}
-.drag-wrapper.is-dragging .shipment-card {
-  border: 1.5px dashed var(--accent);
-  box-shadow: 0 0 0 2px var(--accent-glow);
-}
-.drag-wrapper.drag-over .shipment-card {
-  border-color: var(--accent);
-  box-shadow: 0 0 0 2px var(--accent-glow), inset 0 2px 0 var(--accent);
-  transform: translateY(-2px);
-}
-
 /* ── PROJECT TAB DRAG STATES ───────────────────────────────── */
 .project-tab {
   /* add transition for drag feedback */

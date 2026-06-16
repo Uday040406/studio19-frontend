@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import * as api from './api'
 import './App.css'
@@ -8,7 +8,7 @@ import {
   AlertTriangle, CheckCircle2, X, Send, LogIn, MapPin,
   Anchor, ArrowDownToLine, ArrowUpFromLine, Flag, TrendingDown, TrendingUp,
   ChevronDown, ChevronUp, Sun, Moon, LayoutGrid, FolderKanban, ArrowRight, Clock,
-  FolderInput, GripVertical
+  FolderInput
 } from 'lucide-react'
 
 function formatDate(d) {
@@ -216,7 +216,6 @@ function DeleteModal({ title, message, showDownload, onDownload, onConfirm, onCa
   )
 }
 
-// ── Move Shipment Modal ────────────────────────────────────────
 function MoveShipmentModal({ shipment, projects, currentProjectId, onClose, onMoved }) {
   const [targetId, setTargetId] = useState('')
   const [loading, setLoading] = useState(false)
@@ -227,15 +226,13 @@ function MoveShipmentModal({ shipment, projects, currentProjectId, onClose, onMo
     setLoading(true)
     setError('')
     try {
-      const result = await api.moveShipment(shipment.id, targetId)
-      if (result.error) throw new Error(result.error)
+      const updated = await api.moveShipment(shipment.id, targetId)
+      if (updated.error) throw new Error(updated.error)
       onMoved(shipment.id, targetId)
       onClose()
     } catch (err) { setError(err.message) }
     setLoading(false)
   }
-
-  const otherProjects = projects.filter(p => p.id !== currentProjectId)
 
   return (
     <div className="modal-overlay">
@@ -243,31 +240,30 @@ function MoveShipmentModal({ shipment, projects, currentProjectId, onClose, onMo
         <button className="modal-close" onClick={onClose}><X size={18} /></button>
         <h2>Move Shipment</h2>
         <p style={{ color: 'var(--text-dim)', fontSize: '0.88rem', lineHeight: 1.6 }}>
-          Moving <strong style={{ color: 'var(--text)' }}>{shipment.shipment_name || shipment.container_number}</strong> to another project.
+          Moving <strong>{shipment.shipment_name || shipment.container_number}</strong> to another project.
         </p>
         <label>Target Project</label>
-        {otherProjects.length === 0 ? (
-          <p className="error" style={{ marginTop: 8 }}>No other projects exist. Create one first.</p>
-        ) : (
-          <select
-            value={targetId}
-            onChange={e => setTargetId(e.target.value)}
-            className="modal-select"
-          >
-            <option value="">Select project...</option>
-            {otherProjects.map(p => (
-              <option key={p.id} value={p.id}>{p.name}</option>
-            ))}
-          </select>
-        )}
+        <select
+          value={targetId}
+          onChange={e => setTargetId(e.target.value)}
+          style={{
+            width: '100%', padding: '11px 14px',
+            border: '1.5px solid var(--border)', borderRadius: 9,
+            fontSize: '0.9rem', color: 'var(--text)',
+            background: 'var(--surface-2)', fontFamily: 'inherit',
+            outline: 'none', cursor: 'pointer'
+          }}
+        >
+          <option value="">Select project...</option>
+          {projects
+            .filter(p => p.id !== currentProjectId)
+            .map(p => <option key={p.id} value={p.id}>{p.name}</option>)
+          }
+        </select>
         {error && <p className="error">{error}</p>}
         <div className="modal-buttons">
           <button onClick={onClose} className="btn-secondary">Cancel</button>
-          <button
-            onClick={handleMove}
-            disabled={!targetId || loading || otherProjects.length === 0}
-            className="btn-primary"
-          >
+          <button onClick={handleMove} disabled={!targetId || loading} className="btn-primary">
             {loading ? 'Moving...' : 'Move Shipment'}
           </button>
         </div>
@@ -322,14 +318,13 @@ function EditShipmentModal({ shipment, onClose, onUpdated }) {
   )
 }
 
-// ── Shipment Card ──────────────────────────────────────────────
-function ShipmentCard({ shipment, onRefresh, onDelete, onUpdate, onMove, projects, currentProjectId }) {
-  const [refreshing, setRefreshing]       = useState(false)
+function ShipmentCard({ shipment, onRefresh, onDelete, onUpdate, onMove, projects, activeProjectId }) {
+  const [refreshing, setRefreshing] = useState(false)
   const [showDeleteModal, setShowDeleteModal] = useState(false)
-  const [showEditModal, setShowEditModal]   = useState(false)
-  const [showMoveModal, setShowMoveModal]   = useState(false)
-  const [expanded, setExpanded]           = useState(false)
-  const [barWidth, setBarWidth]           = useState(0)
+  const [showEditModal, setShowEditModal] = useState(false)
+  const [showMoveModal, setShowMoveModal] = useState(false)
+  const [expanded, setExpanded] = useState(false)
+  const [barWidth, setBarWidth] = useState(0)
 
   const displayStatus = getDisplayStatus(shipment)
   const meta = STATUS_META[displayStatus] || STATUS_META.in_transit
@@ -355,11 +350,6 @@ function ShipmentCard({ shipment, onRefresh, onDelete, onUpdate, onMove, project
 
   return (
     <div className={`shipment-card ${meta.css} ${expanded ? 'expanded' : ''}`}>
-      {/* Drag handle — visible on hover */}
-      <div className="drag-handle" title="Drag to reorder">
-        <GripVertical size={15} strokeWidth={2} />
-      </div>
-
       <div className="card-row" onClick={() => setExpanded(!expanded)}>
         <div className="card-row-top">
           <div className="card-id-block">
@@ -374,7 +364,7 @@ function ShipmentCard({ shipment, onRefresh, onDelete, onUpdate, onMove, project
             <button onClick={handleRefresh} disabled={refreshing} className={`icon-btn refresh ${refreshing ? 'spin-active' : ''}`} title="Refresh">
               <RefreshCw size={14} strokeWidth={2.5} />
             </button>
-            <button onClick={(e) => { e.stopPropagation(); setShowEditModal(true) }} className="icon-btn" title="Edit">
+            <button onClick={(e) => { e.stopPropagation(); setShowEditModal(true) }} className="icon-btn edit" title="Edit">
               <Pencil size={14} strokeWidth={2.5} />
             </button>
             <button onClick={(e) => { e.stopPropagation(); setShowMoveModal(true) }} className="icon-btn" title="Move to project">
@@ -464,92 +454,15 @@ function ShipmentCard({ shipment, onRefresh, onDelete, onUpdate, onMove, project
         <MoveShipmentModal
           shipment={shipment}
           projects={projects}
-          currentProjectId={currentProjectId}
+          currentProjectId={activeProjectId}
           onClose={() => setShowMoveModal(false)}
-          onMoved={onMove}
+          onMoved={(shipmentId, targetProjectId) => {
+            onMove(shipmentId, targetProjectId)
+            setShowMoveModal(false)
+          }}
         />,
         document.body
       )}
-    </div>
-  )
-}
-
-// ── Draggable Shipment List ────────────────────────────────────
-function DraggableShipmentList({ shipments, onReorder, projects, currentProjectId, onRefresh, onDelete, onUpdate, onMove }) {
-  const dragIdx = useRef(null)
-  const [dragOver, setDragOver] = useState(null)
-
-  const handleDragStart = (e, i) => {
-  setDragIdx(i)
-  // Create tiny ghost pill instead of full card snapshot
-  const ghost = document.createElement('div')
-  ghost.textContent = shipments[i].container_number || 'Shipment'
-  ghost.style.cssText = `
-    position: fixed; top: -999px; left: -999px;
-    background: var(--accent, #A78BFA);
-    color: white;
-    padding: 6px 14px;
-    border-radius: 100px;
-    font-size: 13px;
-    font-weight: 700;
-    font-family: 'JetBrains Mono', monospace;
-    white-space: nowrap;
-    box-shadow: 0 4px 16px rgba(167,139,250,0.4);
-    pointer-events: none;
-  `
-  document.body.appendChild(ghost)
-  e.dataTransfer.setDragImage(ghost, ghost.offsetWidth / 2, 20)
-  // Remove after browser captures snapshot
-  requestAnimationFrame(() => document.body.removeChild(ghost))
-}
-
-  const handleDragOver = (i, e) => {
-    e.preventDefault()
-    e.dataTransfer.dropEffect = 'move'
-    setDragOver(i)
-  }
-
-  const handleDrop = (i) => {
-    if (dragIdx.current === null || dragIdx.current === i) {
-      setDragOver(null)
-      return
-    }
-    const reordered = [...shipments]
-    const [item] = reordered.splice(dragIdx.current, 1)
-    reordered.splice(i, 0, item)
-    onReorder(reordered)
-    dragIdx.current = null
-    setDragOver(null)
-  }
-
-  const handleDragEnd = () => {
-    dragIdx.current = null
-    setDragOver(null)
-  }
-
-  return (
-    <div className="shipments-grid">
-      {shipments.map((s, i) => (
-        <div
-          key={s.id}
-          draggable
-          onDragStart={(e) => handleDragStart(e, i)}   // ← pass e
-          onDragOver={(e) => e.preventDefault()}
-          onDrop={() => handleDrop(i)}
-          onDragEnd={() => setDragIdx(null)}            // ← add this, cleans up if drop outside
-          className={`drag-wrapper ${dragIdx === i ? 'dragging' : ''}`}
-         >
-          <ShipmentCard
-            shipment={s}
-            onRefresh={onRefresh}
-            onDelete={onDelete}
-            onUpdate={onUpdate}
-            onMove={onMove}
-            projects={projects}
-            currentProjectId={currentProjectId}
-          />
-        </div>
-      ))}
     </div>
   )
 }
@@ -710,65 +623,6 @@ function ThemeToggle({ theme, onToggle }) {
   )
 }
 
-// ── Draggable Project Tabs ─────────────────────────────────────
-function DraggableProjectTabs({ projects, activeProjectId, onSetActive, onReorder, onNewProject }) {
-  const dragIdx = useRef(null)
-  const [dragOver, setDragOver] = useState(null)
-
-  const handleDragStart = (i, e) => {
-    dragIdx.current = i
-    e.dataTransfer.effectAllowed = 'move'
-  }
-
-  const handleDragOver = (i, e) => {
-    e.preventDefault()
-    e.dataTransfer.dropEffect = 'move'
-    setDragOver(i)
-  }
-
-  const handleDrop = (i) => {
-    if (dragIdx.current === null || dragIdx.current === i) {
-      setDragOver(null)
-      return
-    }
-    const reordered = [...projects]
-    const [item] = reordered.splice(dragIdx.current, 1)
-    reordered.splice(i, 0, item)
-    onReorder(reordered)
-    dragIdx.current = null
-    setDragOver(null)
-  }
-
-  const handleDragEnd = () => {
-    dragIdx.current = null
-    setDragOver(null)
-  }
-
-  return (
-    <div className="project-tabs">
-      {projects.map((p, i) => (
-        <button
-          key={p.id}
-          draggable
-          onDragStart={e => handleDragStart(i, e)}
-          onDragOver={e => handleDragOver(i, e)}
-          onDrop={() => handleDrop(i)}
-          onDragEnd={handleDragEnd}
-          className={`project-tab${p.id === activeProjectId ? ' active' : ''}${dragIdx.current === i ? ' tab-dragging' : ''}${dragOver === i && dragIdx.current !== i ? ' tab-drag-over' : ''}`}
-          onClick={() => onSetActive(p.id)}
-        >
-          <GripVertical size={12} strokeWidth={2} className="tab-grip" />
-          {p.name}
-        </button>
-      ))}
-      <button className="project-tab new-tab" onClick={onNewProject}>
-        <Plus size={14} strokeWidth={3} /> New Project
-      </button>
-    </div>
-  )
-}
-
-// ── App ───────────────────────────────────────────────────────
 export default function App() {
   const [theme, setTheme] = useState(() => {
     const saved = typeof localStorage !== 'undefined' && localStorage.getItem('s19-theme')
@@ -790,6 +644,9 @@ export default function App() {
   const [showDeleteProject, setShowDeleteProject] = useState(false)
   const [loading, setLoading] = useState(true)
   const [refreshingAll, setRefreshingAll] = useState(false)
+
+  // Project tab drag state
+  const [projDragIdx, setProjDragIdx] = useState(null)
 
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme)
@@ -856,13 +713,10 @@ export default function App() {
     setAllShipments(prev => prev.filter(s => s.id !== shipmentId))
   }
 
-  // Move shipment to another project
   const handleMoveShipment = (shipmentId, targetProjectId) => {
     setShipments(prev => prev.filter(s => s.id !== shipmentId))
     setAllShipments(prev => prev.map(s =>
-      s.id === shipmentId
-        ? { ...s, project_id: targetProjectId, _projectId: targetProjectId, _projectName: projects.find(p => p.id === targetProjectId)?.name || '' }
-        : s
+      s.id === shipmentId ? { ...s, project_id: targetProjectId } : s
     ))
   }
 
@@ -878,6 +732,19 @@ export default function App() {
   const handleDownload = () => {
     window.open(`${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/api/export/project/${activeProjectId}`)
   }
+
+  // Project tab drag handlers
+  const handleProjDragStart = (i) => setProjDragIdx(i)
+  const handleProjDragOver = (e) => e.preventDefault()
+  const handleProjDrop = (i) => {
+    if (projDragIdx === null || projDragIdx === i) { setProjDragIdx(null); return }
+    const reordered = [...projects]
+    const [item] = reordered.splice(projDragIdx, 1)
+    reordered.splice(i, 0, item)
+    setProjects(reordered)
+    setProjDragIdx(null)
+  }
+  const handleProjDragEnd = () => setProjDragIdx(null)
 
   const activeProject = projects.find(p => p.id === activeProjectId)
 
@@ -914,13 +781,25 @@ export default function App() {
       </div>
 
       {view === 'project' && (
-        <DraggableProjectTabs
-          projects={projects}
-          activeProjectId={activeProjectId}
-          onSetActive={setActiveProjectId}
-          onReorder={setProjects}
-          onNewProject={() => setShowNewProject(true)}
-        />
+        <div className="project-tabs">
+          {projects.map((p, i) => (
+            <button
+              key={p.id}
+              draggable
+              onDragStart={() => handleProjDragStart(i)}
+              onDragOver={handleProjDragOver}
+              onDrop={() => handleProjDrop(i)}
+              onDragEnd={handleProjDragEnd}
+              className={`project-tab ${p.id === activeProjectId ? 'active' : ''} ${projDragIdx === i ? 'dragging' : ''}`}
+              onClick={() => setActiveProjectId(p.id)}
+            >
+              {p.name}
+            </button>
+          ))}
+          <button className="project-tab new-tab" onClick={() => setShowNewProject(true)}>
+            <Plus size={14} strokeWidth={3} /> New Project
+          </button>
+        </div>
       )}
 
       <main className="main">
@@ -942,7 +821,7 @@ export default function App() {
                   <button onClick={() => setShowNewShipment(true)} className="btn-primary">
                     <Plus size={15} strokeWidth={2.5} /> Add Shipment
                   </button>
-                  <button onClick={() => setShowEditProject(true)} className="icon-btn" title="Edit project">
+                  <button onClick={() => setShowEditProject(true)} className="icon-btn edit" title="Edit project">
                     <Pencil size={16} strokeWidth={2.5} />
                   </button>
                   <button onClick={() => setShowDeleteProject(true)} className="icon-btn delete" title="Delete project">
@@ -953,24 +832,29 @@ export default function App() {
 
               {shipments.length > 0 && <FleetStats shipments={shipments} />}
 
-              {shipments.length === 0 ? (
-                <div className="empty-state">
-                  <Package size={40} strokeWidth={1.5} />
-                  <p>No shipments yet</p>
-                  <span>Click "Add Shipment" to start tracking your first container</span>
-                </div>
-              ) : (
-                <DraggableShipmentList
-                  shipments={shipments}
-                  onReorder={setShipments}
-                  projects={projects}
-                  currentProjectId={activeProjectId}
-                  onRefresh={handleRefresh}
-                  onDelete={handleDeleteShipment}
-                  onUpdate={handleUpdateShipment}
-                  onMove={handleMoveShipment}
-                />
-              )}
+              {shipments.length === 0
+                ? (
+                  <div className="empty-state">
+                    <Package size={40} strokeWidth={1.5} />
+                    <p>No shipments yet</p>
+                    <span>Click "Add Shipment" to start tracking your first container</span>
+                  </div>
+                )
+                : <div className="shipments-grid">
+                    {shipments.map(s => (
+                      <ShipmentCard
+                        key={s.id}
+                        shipment={s}
+                        onRefresh={handleRefresh}
+                        onDelete={handleDeleteShipment}
+                        onUpdate={handleUpdateShipment}
+                        onMove={handleMoveShipment}
+                        projects={projects}
+                        activeProjectId={activeProjectId}
+                      />
+                    ))}
+                  </div>
+              }
             </>
           ) : (
             <div className="empty-state">
@@ -1028,12 +912,13 @@ export default function App() {
                   <ShipmentCard
                     key={s.id}
                     shipment={s}
-                    projects={projects}
-                    currentProjectId={s._projectId}
+                    projectName={s._projectName}
                     onRefresh={handleRefresh}
                     onDelete={handleDeleteShipment}
                     onUpdate={handleUpdateShipment}
                     onMove={handleMoveShipment}
+                    projects={projects}
+                    activeProjectId={s._projectId || activeProjectId}
                   />
                 ))}
               </div>
