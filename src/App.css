@@ -798,3 +798,109 @@ button:disabled { opacity: 0.5; cursor: not-allowed; }
   .page-header h2 { font-size: 1.2rem; }
   .shipments-grid { grid-template-columns: 1fr; }
 }
+
+/* ── DRAG HANDLE (shipment cards) ─────────────────────────── */
+.drag-handle {
+  position: absolute;
+  left: 7px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-faint);
+  cursor: grab;
+  opacity: 0;
+  transition: opacity 0.2s ease, color 0.2s ease;
+  z-index: 3;
+  padding: 6px 4px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+}
+.shipment-card:hover .drag-handle {
+  opacity: 1;
+}
+.drag-handle:hover {
+  color: var(--accent);
+}
+.drag-handle:active {
+  cursor: grabbing;
+}
+
+/* Push card-row content slightly right so handle doesn't overlap */
+.shipment-card .card-row {
+  padding-left: 34px;
+}
+
+/* ── DRAG WRAPPER STATES (shipment reorder) ────────────────── */
+.drag-wrapper {
+  position: relative;
+  transition: opacity 0.2s ease;
+}
+.drag-wrapper.is-dragging {
+  opacity: 0.35;
+}
+.drag-wrapper.is-dragging .shipment-card {
+  border: 1.5px dashed var(--accent);
+  box-shadow: 0 0 0 2px var(--accent-glow);
+}
+.drag-wrapper.drag-over .shipment-card {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--accent-glow), inset 0 2px 0 var(--accent);
+  transform: translateY(-2px);
+}
+
+/* ── PROJECT TAB DRAG STATES ───────────────────────────────── */
+.project-tab {
+  /* add transition for drag feedback */
+  transition: all 0.2s var(--ease-bounce), opacity 0.15s ease;
+}
+.project-tab .tab-grip {
+  opacity: 0;
+  color: var(--text-faint);
+  transition: opacity 0.2s ease;
+  flex-shrink: 0;
+  margin-right: 2px;
+}
+.project-tab:hover .tab-grip {
+  opacity: 1;
+}
+.project-tab.active .tab-grip {
+  opacity: 0.6;
+  color: white;
+}
+.project-tab.tab-dragging {
+  opacity: 0.35;
+  cursor: grabbing;
+}
+.project-tab.tab-drag-over {
+  border-color: var(--accent) !important;
+  box-shadow: 0 0 0 2px var(--accent-glow), inset 2px 0 0 var(--accent);
+  transform: translateY(-3px) scale(1.03);
+}
+
+/* ── MODAL SELECT ──────────────────────────────────────────── */
+.modal-select {
+  width: 100%;
+  padding: 11px 14px;
+  border: 1.5px solid var(--border);
+  border-radius: 9px;
+  font-size: 0.9rem;
+  outline: none;
+  color: var(--text);
+  background: var(--surface-2);
+  font-family: inherit;
+  transition: border-color 0.15s, background 0.15s;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%239496B5' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 14px center;
+  padding-right: 36px;
+  cursor: pointer;
+}
+.modal-select:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-glow);
+}
+.modal-select option {
+  background: var(--surface);
+  color: var(--text);
+}
