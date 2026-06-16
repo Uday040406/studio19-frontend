@@ -356,6 +356,10 @@ function ShipmentCard({ shipment, onRefresh, onDelete, onUpdate, onMove, project
             <div className="card-id">{shipment.container_number}</div>
           </div>
 
+         {shipment.carrier && (
+          <span className="carrier-pill">{shipment.carrier}</span>
+         )}
+
           <span className={`status-pill ${meta.processing ? 'processing' : ''}`}>
             <span className="dot" /> {meta.label.toUpperCase()}
           </span>
