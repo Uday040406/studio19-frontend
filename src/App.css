@@ -570,9 +570,10 @@ button:disabled { opacity: 0.5; cursor: not-allowed; }
   padding: 0 12px;
 }
 
-/* Actions pushed to the right end */
+/* Actions always pinned to far right */
 .card-row-top .card-actions {
   flex-shrink: 0;
+  margin-left: auto;
 }
 
 .card-row-bottom {
