@@ -367,17 +367,14 @@ function ShipmentCard({ shipment, projectName: propProjectName, onRefresh, onDel
                 <span className="dot" /> {meta.label.toUpperCase()}
               </span>
             </div>
-            {shipment.shipment_name && shipment.shipment_name !== shipment.container_number && (
-              <div className="substext">{shipment.shipment_name}</div>
-            )}
             {shipment.carrier && (
               <span className="carrier-pill">{shipment.carrier}</span>
             )}
           </div>
 
-          {/* CENTER: project name */}
-          {projectName && (
-            <div className="card-project-name">{projectName}</div>
+          {/* CENTER: shipment name */}
+          {shipment.shipment_name && shipment.shipment_name !== shipment.container_number && (
+            <div className="card-project-name">{shipment.shipment_name}</div>
           )}
 
           {/* RIGHT: action buttons */}

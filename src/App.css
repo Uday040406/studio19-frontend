@@ -551,15 +551,14 @@ button:disabled { opacity: 0.5; cursor: not-allowed; }
   font-weight: 600;
 }
 
-/* Project name — centered between left block and actions */
+/* Shipment name — centered, large, white */
 .card-project-name {
   flex: 1;
   text-align: center;
-  font-size: 0.72rem;
+  font-size: 1rem;
   font-weight: 700;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--text-faint);
+  letter-spacing: 0.04em;
+  color: var(--text);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
