@@ -318,13 +318,17 @@ function EditShipmentModal({ shipment, onClose, onUpdated }) {
   )
 }
 
-function ShipmentCard({ shipment, onRefresh, onDelete, onUpdate, onMove, projects, activeProjectId }) {
+// ─── SHIPMENT CARD ────────────────────────────────────────────────────────────
+function ShipmentCard({ shipment, projectName: propProjectName, onRefresh, onDelete, onUpdate, onMove, projects, activeProjectId }) {
   const [refreshing, setRefreshing] = useState(false)
   const [showDeleteModal, setShowDeleteModal] = useState(false)
   const [showEditModal, setShowEditModal] = useState(false)
   const [showMoveModal, setShowMoveModal] = useState(false)
   const [expanded, setExpanded] = useState(false)
   const [barWidth, setBarWidth] = useState(0)
+
+  // Resolve project name from prop (unified view) or from projects array (project view)
+  const projectName = propProjectName || projects.find(p => p.id === activeProjectId)?.name || ''
 
   const displayStatus = getDisplayStatus(shipment)
   const meta = STATUS_META[displayStatus] || STATUS_META.in_transit
@@ -351,19 +355,32 @@ function ShipmentCard({ shipment, onRefresh, onDelete, onUpdate, onMove, project
   return (
     <div className={`shipment-card ${meta.css} ${expanded ? 'expanded' : ''}`}>
       <div className="card-row" onClick={() => setExpanded(!expanded)}>
+
+        {/* ── TOP ROW: [container# + status | carrier] ── [project name] ── [actions] ── */}
         <div className="card-row-top">
+
+          {/* LEFT: container number + status pill inline, carrier pill below */}
           <div className="card-id-block">
-            <div className="card-id">{shipment.container_number}</div>
+            <div className="card-id-line">
+              <div className="card-id">{shipment.container_number}</div>
+              <span className={`status-pill ${meta.processing ? 'processing' : ''}`}>
+                <span className="dot" /> {meta.label.toUpperCase()}
+              </span>
+            </div>
+            {shipment.shipment_name && shipment.shipment_name !== shipment.container_number && (
+              <div className="substext">{shipment.shipment_name}</div>
+            )}
+            {shipment.carrier && (
+              <span className="carrier-pill">{shipment.carrier}</span>
+            )}
           </div>
 
-         {shipment.carrier && (
-          <span className="carrier-pill">{shipment.carrier}</span>
-         )}
+          {/* CENTER: project name */}
+          {projectName && (
+            <div className="card-project-name">{projectName}</div>
+          )}
 
-          <span className={`status-pill ${meta.processing ? 'processing' : ''}`}>
-            <span className="dot" /> {meta.label.toUpperCase()}
-          </span>
-
+          {/* RIGHT: action buttons */}
           <div className="card-actions">
             <button onClick={handleRefresh} disabled={refreshing} className={`icon-btn refresh ${refreshing ? 'spin-active' : ''}`} title="Refresh">
               <RefreshCw size={14} strokeWidth={2.5} />
@@ -383,6 +400,7 @@ function ShipmentCard({ shipment, onRefresh, onDelete, onUpdate, onMove, project
           </div>
         </div>
 
+        {/* ── BOTTOM ROW: route / progress / ETA ── */}
         <div className="card-row-bottom">
           <div className="card-route">
             <div className="route-point">
@@ -423,6 +441,7 @@ function ShipmentCard({ shipment, onRefresh, onDelete, onUpdate, onMove, project
         </div>
       </div>
 
+      {/* ── EXPANDED BODY ── */}
       <div className={`shipment-body${expanded ? ' open' : ''}`}>
         <DelayBadge
           delayDays={shipment.delay_days}
@@ -649,7 +668,6 @@ export default function App() {
   const [loading, setLoading] = useState(true)
   const [refreshingAll, setRefreshingAll] = useState(false)
 
-  // Project tab drag state
   const [projDragIdx, setProjDragIdx] = useState(null)
 
   useEffect(() => {
@@ -737,7 +755,6 @@ export default function App() {
     window.open(`${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/api/export/project/${activeProjectId}`)
   }
 
-  // Project tab drag handlers
   const handleProjDragStart = (i) => setProjDragIdx(i)
   const handleProjDragOver = (e) => e.preventDefault()
   const handleProjDrop = (i) => {

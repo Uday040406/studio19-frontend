@@ -394,7 +394,6 @@ button:disabled { opacity: 0.5; cursor: not-allowed; }
   box-shadow: 0 0 0 1px color-mix(in srgb, var(--s) 25%, transparent) inset;
 }
 
-/* Pulse animations for stat icons */
 @keyframes iconPulse {
   0%, 100% { transform: scale(1); opacity: 1; }
   50% { transform: scale(1.12); opacity: 0.8; }
@@ -424,9 +423,7 @@ button:disabled { opacity: 0.5; cursor: not-allowed; }
 .stat-num { font-size: 1.35rem; font-weight: 800; }
 .stat-label { font-size: 0.68rem; font-weight: 700; color: var(--text-faint); text-transform: uppercase; letter-spacing: 0.07em; white-space: nowrap; }
 
-
-
-/* ============ PILL FILTER BAR (Unified view) ============ */
+/* ============ PILL FILTER BAR ============ */
 .filter-bar {
   display: flex;
   gap: 8px;
@@ -452,7 +449,7 @@ button:disabled { opacity: 0.5; cursor: not-allowed; }
   box-shadow: 0 6px 16px var(--sg, var(--accent-glow));
 }
 
-/* ============ SHIPMENT GRID (Unified view) ============ */
+/* ============ SHIPMENT GRID ============ */
 .shipments-grid {
   display: flex;
   flex-direction: column;
@@ -460,7 +457,7 @@ button:disabled { opacity: 0.5; cursor: not-allowed; }
 }
 .shipments-list { display: flex; flex-direction: column; gap: 14px; width: 100%; }
 
-/* ============ SHIPMENT CARD (image reference design) ============ */
+/* ============ SHIPMENT CARD ============ */
 .shipment-card {
   background: var(--glass);
   backdrop-filter: blur(14px);
@@ -501,7 +498,6 @@ button:disabled { opacity: 0.5; cursor: not-allowed; }
   to   { opacity: 1; transform: translateY(0); }
 }
 
-/* card body — matches reference image layout */
 .card-row {
   position: relative;
   z-index: 1;
@@ -512,12 +508,29 @@ button:disabled { opacity: 0.5; cursor: not-allowed; }
   cursor: pointer;
 }
 
+/* ── TOP ROW ───────────────────────────────────────────────── */
 .card-row-top {
   display: flex;
   align-items: center;
   gap: 18px;
 }
-.card-id-block { display: flex; flex-direction: column; gap: 5px; }
+
+/* Left block: container# + status (inline), shipment name + carrier (stacked below) */
+.card-id-block {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  flex-shrink: 0;
+}
+
+/* Container number and status pill on the same line */
+.card-id-line {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
 .card-id {
   font-family: 'JetBrains Mono', monospace;
   font-size: 1.3rem;
@@ -530,9 +543,33 @@ button:disabled { opacity: 0.5; cursor: not-allowed; }
   transition: letter-spacing 0.3s var(--ease-bounce);
 }
 .shipment-card:hover .card-id { letter-spacing: 0.07em; }
-.card-id-block .substext { font-size: 0.8rem; color: var(--text-dim); font-weight: 600; }
-.card-row-top .status-pill { margin-left: 4px; }
-.card-row-top .card-actions { margin-left: auto; }
+
+/* Shipment name subtitle */
+.card-id-block .substext {
+  font-size: 0.8rem;
+  color: var(--text-dim);
+  font-weight: 600;
+}
+
+/* Project name — centered between left block and actions */
+.card-project-name {
+  flex: 1;
+  text-align: center;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  padding: 0 12px;
+}
+
+/* Actions pushed to the right end */
+.card-row-top .card-actions {
+  flex-shrink: 0;
+}
 
 .card-row-bottom {
   display: flex;
@@ -562,7 +599,9 @@ button:disabled { opacity: 0.5; cursor: not-allowed; }
   .card-route { width: 100%; }
   .card-progress { width: 100%; }
   .eta-block { width: 100%; }
+  .card-project-name { display: none; }
 }
+
 .status-pill {
   font-family: 'JetBrains Mono', monospace;
   font-size: 0.68rem;
@@ -814,7 +853,6 @@ button:disabled { opacity: 0.5; cursor: not-allowed; }
 
 /* ── PROJECT TAB DRAG STATES ───────────────────────────────── */
 .project-tab {
-  /* add transition for drag feedback */
   transition: all 0.2s var(--ease-bounce), opacity 0.15s ease;
 }
 .project-tab .tab-grip {
@@ -824,17 +862,9 @@ button:disabled { opacity: 0.5; cursor: not-allowed; }
   flex-shrink: 0;
   margin-right: 2px;
 }
-.project-tab:hover .tab-grip {
-  opacity: 1;
-}
-.project-tab.active .tab-grip {
-  opacity: 0.6;
-  color: white;
-}
-.project-tab.tab-dragging {
-  opacity: 0.35;
-  cursor: grabbing;
-}
+.project-tab:hover .tab-grip { opacity: 1; }
+.project-tab.active .tab-grip { opacity: 0.6; color: white; }
+.project-tab.tab-dragging { opacity: 0.35; cursor: grabbing; }
 .project-tab.tab-drag-over {
   border-color: var(--accent) !important;
   box-shadow: 0 0 0 2px var(--accent-glow), inset 2px 0 0 var(--accent);
@@ -860,11 +890,5 @@ button:disabled { opacity: 0.5; cursor: not-allowed; }
   padding-right: 36px;
   cursor: pointer;
 }
-.modal-select:focus {
-  border-color: var(--accent);
-  box-shadow: 0 0 0 3px var(--accent-glow);
-}
-.modal-select option {
-  background: var(--surface);
-  color: var(--text);
-}
+.modal-select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-glow); }
+.modal-select option { background: var(--surface); color: var(--text); }
