@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { createPortal } from 'react-dom'
+import { Analytics } from '@vercel/analytics/react'
 import * as api from './api'
 import './App.css'
 import logo from './assets/studio19-logo.png'
@@ -978,6 +979,7 @@ export default function App() {
           onCancel={() => setShowDeleteProject(false)}
         />
       )}
+      <Analytics />
     </div>
   )
 }
