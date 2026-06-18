@@ -889,14 +889,40 @@ export default function App() {
                 <p className="page-subtitle">Global overview across every project</p>
               </div>
                  <div className="page-actions">
-                <button   onClick={async () => {setUnifiedLoading(true)const updates = await Promise.all(allShipments.map(s => api.refreshShipment(s.id)))
-                  setAllShipments(prev => prev.map(s => {const u = updates.find(x => x.id === s.id) return (u && !u.error) ? { ...u, _projectName: s._projectName, _projectId: s._projectId } : s }))
-                  setUnifiedLoading(false)}}
-                  disabled={unifiedLoading || allShipments.length === 0}
-                  className={`icon-btn refresh ${unifiedLoading ? 'spin-active' : ''}`}
-                  title="Refresh all shipments">
-                     <RefreshCw size={16} strokeWidth={2.5} />
-                    </button>
+                <button
+  onClick={async () => {
+    try {
+      setUnifiedLoading(true)
+
+      const updates = await Promise.all(
+        allShipments.map(s => api.refreshShipment(s.id))
+      )
+
+      setAllShipments(prev =>
+        prev.map(s => {
+          const u = updates.find(x => x.id === s.id)
+
+          return (u && !u.error)
+            ? {
+                ...u,
+                _projectName: s._projectName,
+                _projectId: s._projectId
+              }
+            : s
+        })
+      )
+    } catch (error) {
+      console.error('Failed to refresh shipments:', error)
+    } finally {
+      setUnifiedLoading(false)
+    }
+  }}
+  disabled={unifiedLoading || allShipments.length === 0}
+  className={`icon-btn refresh ${unifiedLoading ? 'spin-active' : ''}`}
+  title="Refresh all shipments"
+>
+  <RefreshCw size={16} strokeWidth={2.5} />
+</button>
               </div>
             </div>
 
